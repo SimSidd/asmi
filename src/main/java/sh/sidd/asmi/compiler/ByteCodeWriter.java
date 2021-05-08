@@ -73,14 +73,9 @@ public class ByteCodeWriter {
   public void startMethod() {
     methodVisitor = classVisitor.visitMethod(Opcodes.ACC_PUBLIC, "execute", "()V", null, null);
     methodVisitor.visitCode();
-    methodVisitor.visitFieldInsn(
-        Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
   }
 
   public void endMethod() {
-    methodVisitor.visitMethodInsn(
-        Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(D)V", false);
-
     methodVisitor.visitInsn(Opcodes.RETURN);
 
     // CheckClassAdapter does not work together with ClassWriter.COMPUTE_FRAMES and requires to have
@@ -110,7 +105,7 @@ public class ByteCodeWriter {
       case LONG -> Opcodes.LMUL;
       case FLOAT -> Opcodes.FMUL;
       case DOUBLE -> Opcodes.DMUL;
-      default -> throw new ByteCodeException("Cannot divide given type.");
+      default -> throw new ByteCodeException("Cannot multiply given type.");
     };
 
     methodVisitor.visitInsn(opcode);
@@ -127,7 +122,7 @@ public class ByteCodeWriter {
       case LONG -> Opcodes.LADD;
       case FLOAT -> Opcodes.FADD;
       case DOUBLE -> Opcodes.DADD;
-      default -> throw new ByteCodeException("Cannot divide given type.");
+      default -> throw new ByteCodeException("Cannot add given type.");
     };
 
     methodVisitor.visitInsn(opcode);
@@ -144,7 +139,7 @@ public class ByteCodeWriter {
       case LONG -> Opcodes.LSUB;
       case FLOAT -> Opcodes.FSUB;
       case DOUBLE -> Opcodes.DSUB;
-      default -> throw new ByteCodeException("Cannot divide given type.");
+      default -> throw new ByteCodeException("Cannot subtract given type.");
     };
 
     methodVisitor.visitInsn(opcode);
@@ -211,5 +206,23 @@ public class ByteCodeWriter {
     }
 
     methodVisitor.visitInsn(opcode);
+  }
+
+  /**
+   * Writes the bytecode for to call System.out.println.
+   *
+   * @param valueType The type which the current value has.
+   * @param printValue A runnable which puts the value to print on the stack.
+   */
+  public void writePrint(ValueType valueType, Runnable printValue) {
+    final var descriptor = "(" + valueType.toDescriptor() +")V";
+
+    methodVisitor.visitFieldInsn(
+        Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+
+    printValue.run();
+
+    methodVisitor.visitMethodInsn(
+        Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", descriptor, false);
   }
 }

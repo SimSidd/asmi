@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="PMD-IDEA">
-    <option name="rulesPath" value="$PROJECT_DIR$/configs/pmd-ruleset.xml" />
-    <option name="checkTests" value="true" />
-    <option name="pmdVersion" value="6.30.0" />
-    <option name="jdkVersion" value="16" />
+    <option name="rulesPath" value="$PROJECT_DIR$\configs\pmd-ruleset.xml"/>
+    <option name="checkTests" value="true"/>
+    <option name="pmdVersion" value="6.30.0"/>
+    <option name="jdkVersion" value="16"/>
   </component>
 </project>

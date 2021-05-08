@@ -1,5 +1,6 @@
 package sh.sidd.asmi.compiler;
 
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.data.Expr;
@@ -7,17 +8,20 @@ import sh.sidd.asmi.data.Expr.Binary;
 import sh.sidd.asmi.data.Expr.Grouping;
 import sh.sidd.asmi.data.Expr.Literal;
 import sh.sidd.asmi.data.Expr.Unary;
+import sh.sidd.asmi.data.Stmt;
+import sh.sidd.asmi.data.Stmt.Expression;
+import sh.sidd.asmi.data.Stmt.Print;
 import sh.sidd.asmi.data.ValueType;
 
 @Slf4j
-public class Compiler implements Expr.Visitor<Void> {
+public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
   private final ErrorHandler errorHandler;
   private final ByteCodeWriter writer;
-  private final Expr ast;
+  private final List<Stmt> ast;
   private final ValueTypeVisitor valueTypeVisitor;
 
-  public Compiler(ErrorHandler errorHandler, Expr ast) {
+  public Compiler(ErrorHandler errorHandler, List<Stmt> ast) {
     this.errorHandler = errorHandler;
     writer = new ByteCodeWriter();
     this.ast = ast;
@@ -30,7 +34,9 @@ public class Compiler implements Expr.Visitor<Void> {
 
     writer.startMethod();
 
-    ast.accept(this);
+    for(final var stmt : ast) {
+      stmt.accept(this);
+    }
 
     writer.endMethod();
 
@@ -110,6 +116,22 @@ public class Compiler implements Expr.Visitor<Void> {
     } catch (ByteCodeException ex) {
       errorHandler.report(expr.operator(), ex.getMessage());
     }
+
+    return null;
+  }
+
+  @Override
+  public Void visitExpression(Expression stmt) {
+    stmt.expression().accept(this);
+
+    return null;
+  }
+
+  @Override
+  public Void visitPrint(Print stmt) {
+    final var valueType = stmt.expression().accept(valueTypeVisitor);
+
+    writer.writePrint(valueType, () -> stmt.expression().accept(this));
 
     return null;
   }

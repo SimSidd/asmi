@@ -23,11 +23,6 @@ public class AsmiCli {
 
   /** Runs the CLI tool. */
   public void run() {
-    if (true) {
-      run("1 + 0.5");
-      return;
-    }
-
     if (args.size() > 1) {
       System.out.println("Usage: asmi [script]");
       System.exit(1);

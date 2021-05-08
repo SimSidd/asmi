@@ -1,8 +1,10 @@
 package sh.sidd.asmi.parser;
 
+import java.util.ArrayList;
 import java.util.List;
 import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.data.Expr;
+import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Token;
 import sh.sidd.asmi.data.TokenType;
 
@@ -22,13 +24,40 @@ public class Parser {
    *
    * @return The parsed expression.
    */
-  public Expr parse() {
+  public List<Stmt> parse() {
+    final var statements = new ArrayList<Stmt>();
+
     try {
-      return parseExpression();
+      while (!reader.isAtEnd()) {
+        statements.add(parseStatement());
+      }
     } catch (ParserException ex) {
       errorHandler.report(ex.getToken(), ex.getMessage());
       return null;
     }
+
+    return statements;
+  }
+
+  /** Parses a single statement. */
+  private Stmt parseStatement() {
+    if (reader.advanceIfMatch(TokenType.PRINT)) {
+      return parsePrintStatement();
+    }
+
+    return parseExpressionStatement();
+  }
+
+  /** Parses a single `print` statement. */
+  private Stmt parsePrintStatement() {
+    final var value = parseExpression();
+    return new Stmt.Print(value);
+  }
+
+  /** Parses a single expression statement. */
+  private Stmt parseExpressionStatement() {
+    final var expr = parseExpression();
+    return new Stmt.Expression(expr);
   }
 
   /** Parses a single expression. */

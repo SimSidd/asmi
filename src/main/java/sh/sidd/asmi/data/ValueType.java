@@ -73,4 +73,19 @@ public enum ValueType {
 
     return UNKNOWN;
   }
+
+  /**
+   * Converts this value type to a bytecode descriptor.
+   */
+  public String toDescriptor() {
+    return switch (this) {
+      case SHORT -> "S";
+      case INT -> "I";
+      case LONG -> "L";
+      case FLOAT -> "F";
+      case DOUBLE -> "D";
+      case STRING -> "Ljava/lang/String;";
+      default -> null;
+    };
+  }
 }
