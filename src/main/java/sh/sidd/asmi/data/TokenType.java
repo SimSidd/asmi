@@ -53,6 +53,7 @@ public enum TokenType {
   THIS("this"),
   VAR("var"),
   WHILE("while"),
+  CLASS("class"),
 
   EOF;
 

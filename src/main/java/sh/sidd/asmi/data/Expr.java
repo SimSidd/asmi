@@ -7,17 +7,11 @@ public interface Expr {
 
   /**
    * Visitor pattern to visit each expression.
-   *
-   * @param <R> The type of the visitor return value.
    */
   interface Visitor<R> {
-
     R visitBinaryExpr(Binary expr);
-
     R visitGroupingExpr(Grouping expr);
-
     R visitLiteralExpr(Literal expr);
-
     R visitUnaryExpr(Unary expr);
   }
 
@@ -25,8 +19,6 @@ public interface Expr {
    * Accepts a visitor and visits this expression.
    *
    * @param visitor The visitor to use.
-   * @param <R>     The type of the visitor return value.
-   * @return The return value of the visitor.
    */
   <R> R accept(Visitor<R> visitor);
 

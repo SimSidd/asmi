@@ -23,10 +23,10 @@ public class AsmiCli {
 
   /** Runs the CLI tool. */
   public void run() {
-    final var compiler = new Compiler();
-    compiler.visitEnd();
-    if(true)return;
-
+    if (true) {
+      run("1 + 0.5");
+      return;
+    }
 
     if (args.size() > 1) {
       System.out.println("Usage: asmi [script]");
@@ -81,7 +81,11 @@ public class AsmiCli {
     final var scanner = new Scanner(source, errorHandler);
     final var tokens = scanner.scanTokens();
     final var parser = new Parser(errorHandler, tokens);
+    final var ast = parser.parse();
+    final var compiler = new Compiler(errorHandler, ast);
 
-    System.out.println(parser.parse());
+    compiler.compile();
+
+    System.out.println();
   }
 }

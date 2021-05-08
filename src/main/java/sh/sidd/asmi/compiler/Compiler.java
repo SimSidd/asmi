@@ -1,110 +1,116 @@
 package sh.sidd.asmi.compiler;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.reflect.MethodUtils;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.util.CheckClassAdapter;
-import org.objectweb.asm.util.TraceClassVisitor;
+import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.data.Expr;
 import sh.sidd.asmi.data.Expr.Binary;
 import sh.sidd.asmi.data.Expr.Grouping;
 import sh.sidd.asmi.data.Expr.Literal;
 import sh.sidd.asmi.data.Expr.Unary;
+import sh.sidd.asmi.data.ValueType;
 
 @Slf4j
-public class Compiler implements Expr.Visitor<Object> {
+public class Compiler implements Expr.Visitor<Void> {
 
-  public class AsmiClassLoader extends ClassLoader {
-    public Class defineClass(String name, byte[] b) {
-      return defineClass(name, b, 0, b.length);
+  private final ErrorHandler errorHandler;
+  private final ByteCodeWriter writer;
+  private final Expr ast;
+  private final ValueTypeVisitor valueTypeVisitor;
+
+  public Compiler(ErrorHandler errorHandler, Expr ast) {
+    this.errorHandler = errorHandler;
+    writer = new ByteCodeWriter();
+    this.ast = ast;
+    this.valueTypeVisitor = new ValueTypeVisitor();
+  }
+
+  /** Compiles the AST into a .class file. */
+  public void compile() {
+    writer.startClass();
+
+    writer.startMethod();
+
+    ast.accept(this);
+
+    writer.endMethod();
+
+    writer.finishClass();
+
+    if(!errorHandler.isHasError()) {
+      writer.run();
     }
   }
 
-  private final ClassWriter classWriter;
-  private final StringWriter stringWriter;
-  private final CheckClassAdapter checkClassAdapter;
-  private final TraceClassVisitor traceClassVisitor;
-  private final ClassVisitor classVisitor;
+  @Override
+  public Void visitBinaryExpr(Binary expr) {
+    final var leftType = expr.left().accept(valueTypeVisitor);
+    final var rightType = expr.right().accept(valueTypeVisitor);
+    final var resultType = ValueType.findImplicitCastType(leftType, rightType);
 
-  public Compiler() {
-    classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-    stringWriter = new StringWriter();
-    traceClassVisitor = new TraceClassVisitor(classWriter, new PrintWriter(stringWriter));
-    checkClassAdapter = new CheckClassAdapter(traceClassVisitor);
-    classVisitor = checkClassAdapter;
-
-    byteCodeTest();
-  }
-
-  private void byteCodeTest() {
-    classVisitor.visit(
-        Opcodes.V16,
-        Opcodes.ACC_PUBLIC,
-        "sh/sidd/asmi/Compiled",
-        null,
-        "java/lang/Object",
-        new String[] {});
-
-    final var constructor =
-        classWriter.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
-    constructor.visitVarInsn(Opcodes.ALOAD, 0);
-    constructor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-    constructor.visitInsn(Opcodes.RETURN);
-    constructor.visitMaxs(0, 0);
-    constructor.visitEnd();
-
-    final var methodVisitor =
-        classVisitor.visitMethod(Opcodes.ACC_PUBLIC, "print", "(Ljava/lang/Object;)V", null, null);
-    methodVisitor.visitCode();
-    methodVisitor.visitFieldInsn(
-        Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-    methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
-    methodVisitor.visitMethodInsn(
-        Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/Object;)V", false);
-
-    methodVisitor.visitInsn(Opcodes.RETURN);
-    methodVisitor.visitMaxs(2, 2);
-    methodVisitor.visitEnd();
-
-    classVisitor.visitEnd();
-
-    System.out.println(stringWriter);
+    if(!resultType.isNumeric()) {
+      errorHandler.report(expr.operator(), "Operands must be numeric.");
+      return null;
+    }
 
     try {
-      final var compiledClass =
-          new AsmiClassLoader().defineClass("sh.sidd.asmi.Compiled", classWriter.toByteArray());
-      final var instance = compiledClass.getDeclaredConstructor().newInstance();
+      expr.left().accept(this);
+      if(leftType != resultType) {
+        writer.writeCast(leftType, resultType);
+      }
 
-      MethodUtils.invokeMethod(instance, "print", "hello bytecode");
-    } catch (Exception ex) {
-      log.error("Class creation failed", ex);
+      expr.right().accept(this);
+      if(rightType != resultType) {
+        writer.writeCast(rightType, resultType);
+      }
+
+      switch(expr.operator().tokenType()) {
+        case PLUS -> writer.writeAdd(resultType);
+        case MINUS -> writer.writeSub(resultType);
+        case STAR -> writer.writeMul(resultType);
+        case SLASH -> writer.writeDiv(resultType);
+        default -> errorHandler.report(expr.operator(), "Expected binary operator.");
+      }
+    } catch (ByteCodeException ex) {
+      errorHandler.report(expr.operator(), ex.getMessage());
     }
-  }
 
-  /** Finishes visiting and writes the compiled class to its destination. */
-  public void visitEnd() {}
-
-  @Override
-  public Object visitBinaryExpr(Binary expr) {
     return null;
   }
 
   @Override
-  public Object visitGroupingExpr(Grouping expr) {
+  public Void visitGroupingExpr(Grouping expr) {
+    return expr.accept(this);
+  }
+
+  @Override
+  public Void visitLiteralExpr(Literal expr) {
+    writer.pushConstant(expr.value());
     return null;
   }
 
   @Override
-  public Object visitLiteralExpr(Literal expr) {
-    return null;
-  }
+  public Void visitUnaryExpr(Unary expr) {
+    final var rightType = expr.right().accept(valueTypeVisitor);
 
-  @Override
-  public Object visitUnaryExpr(Unary expr) {
+    try {
+      switch(expr.operator().tokenType()) {
+        case MINUS -> {
+          if(!rightType.isNumeric()) {
+            errorHandler.report(expr.operator(), "Can only negate numeric values.");
+            return null;
+          }
+
+          expr.right().accept(this);
+
+          writer.pushConstant(-1);
+          writer.writeMul(rightType);
+        }
+        default -> errorHandler.report(expr.operator(), "Expected unary operator.");
+      }
+    } catch (ByteCodeException ex) {
+      errorHandler.report(expr.operator(), ex.getMessage());
+    }
+
     return null;
   }
 }
