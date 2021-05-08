@@ -17,7 +17,7 @@ public class ErrorHandler {
    */
   public void report(int line, String message) {
     hasError = true;
-    log.error(String.format("[line %d] Error: %s", line, message));
+    log.error(String.format("[line %d] Error: %s", line + 1, message));
   }
 
   /**
@@ -28,6 +28,7 @@ public class ErrorHandler {
    */
   public void report(Token token, String message) {
     hasError = true;
-    log.error(String.format("[line %d] Error at '%s': %s", token.line(), token.lexeme(), message));
+    log.error(
+        String.format("[line %d] Error at '%s': %s", token.line() + 1, token.lexeme(), message));
   }
 }

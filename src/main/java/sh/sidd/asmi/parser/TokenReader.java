@@ -78,8 +78,8 @@ public class TokenReader {
   public void consumeExpected(TokenType expected, String message) {
     if (check(expected)) {
       readAndAdvance();
+    } else {
+      throw new ParserException(peek(), message);
     }
-
-    throw new ParserException(peek(), message);
   }
 }

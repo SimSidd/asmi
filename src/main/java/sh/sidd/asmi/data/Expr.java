@@ -1,17 +1,20 @@
 package sh.sidd.asmi.data;
 
-/**
- * Base interface for all expressions.
- */
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+/** Base interface for all expressions. */
 public interface Expr {
 
-  /**
-   * Visitor pattern to visit each expression.
-   */
+  /** Visitor pattern to visit each expression. */
   interface Visitor<R> {
     R visitBinaryExpr(Binary expr);
+
     R visitGroupingExpr(Grouping expr);
+
     R visitLiteralExpr(Literal expr);
+
     R visitUnaryExpr(Unary expr);
   }
 
@@ -22,7 +25,28 @@ public interface Expr {
    */
   <R> R accept(Visitor<R> visitor);
 
-  record Binary(Expr left, Token operator, Expr right) implements Expr {
+  /** Returns the type of this expression. */
+  ValueType getValueType();
+
+  /**
+   * Sets the type of this expression.
+   *
+   * @param valueType The type of this expression.
+   */
+  void setValueType(ValueType valueType);
+
+  @ToString
+  class Binary implements Expr {
+    @Getter private final Expr left;
+    @Getter private final Token operator;
+    @Getter private final Expr right;
+    @Getter @Setter private ValueType valueType;
+
+    public Binary(Expr left, Token operator, Expr right) {
+      this.left = left;
+      this.operator = operator;
+      this.right = right;
+    }
 
     @Override
     public <R> R accept(Visitor<R> visitor) {
@@ -30,7 +54,14 @@ public interface Expr {
     }
   }
 
-  record Grouping(Expr expression) implements Expr {
+  @ToString
+  class Grouping implements Expr {
+    @Getter private final Expr expr;
+    @Getter @Setter private ValueType valueType;
+
+    public Grouping(Expr expr) {
+      this.expr = expr;
+    }
 
     @Override
     public <R> R accept(Visitor<R> visitor) {
@@ -38,7 +69,14 @@ public interface Expr {
     }
   }
 
-  record Literal(Object value) implements Expr {
+  @ToString
+  class Literal implements Expr {
+    @Getter private final Object value;
+    @Getter @Setter private ValueType valueType;
+
+    public Literal(Object value) {
+      this.value = value;
+    }
 
     @Override
     public <R> R accept(Visitor<R> visitor) {
@@ -46,7 +84,16 @@ public interface Expr {
     }
   }
 
-  record Unary(Token operator, Expr right) implements Expr {
+  @ToString
+  class Unary implements Expr {
+    @Getter private final Token operator;
+    @Getter private final Expr right;
+    @Getter @Setter private ValueType valueType;
+
+    public Unary(Token operator, Expr right) {
+      this.operator = operator;
+      this.right = right;
+    }
 
     @Override
     public <R> R accept(Visitor<R> visitor) {

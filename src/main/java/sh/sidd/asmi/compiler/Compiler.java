@@ -19,19 +19,26 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   private final ErrorHandler errorHandler;
   private final ByteCodeWriter writer;
   private final List<Stmt> ast;
-  private final ValueTypeVisitor valueTypeVisitor;
 
   public Compiler(ErrorHandler errorHandler, List<Stmt> ast) {
     this.errorHandler = errorHandler;
     writer = new ByteCodeWriter();
     this.ast = ast;
-    this.valueTypeVisitor = new ValueTypeVisitor();
   }
 
   /** Compiles the AST into a .class file. */
   public void compile() {
-    writer.startClass();
+    final var valueTypeVisitor = new ValueTypeVisitor();
 
+    if(ast == null) {
+      return;
+    }
+
+    for(final var stmt : ast) {
+      stmt.accept(valueTypeVisitor);
+    }
+
+    writer.startClass();
     writer.startMethod();
 
     for(final var stmt : ast) {
@@ -39,7 +46,6 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     writer.endMethod();
-
     writer.finishClass();
   }
 
@@ -51,35 +57,35 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
   @Override
   public Void visitBinaryExpr(Binary expr) {
-    final var leftType = expr.left().accept(valueTypeVisitor);
-    final var rightType = expr.right().accept(valueTypeVisitor);
+    final var leftType = expr.getLeft().getValueType();
+    final var rightType = expr.getRight().getValueType();
     final var resultType = ValueType.findImplicitCastType(leftType, rightType);
 
     if(!resultType.isNumeric()) {
-      errorHandler.report(expr.operator(), "Operands must be numeric.");
+      errorHandler.report(expr.getOperator(), "Operands must be numeric.");
       return null;
     }
 
     try {
-      expr.left().accept(this);
+      expr.getLeft().accept(this);
       if(leftType != resultType) {
         writer.writeCast(leftType, resultType);
       }
 
-      expr.right().accept(this);
+      expr.getRight().accept(this);
       if(rightType != resultType) {
         writer.writeCast(rightType, resultType);
       }
 
-      switch(expr.operator().tokenType()) {
+      switch(expr.getOperator().tokenType()) {
         case PLUS -> writer.writeAdd(resultType);
         case MINUS -> writer.writeSub(resultType);
         case STAR -> writer.writeMul(resultType);
         case SLASH -> writer.writeDiv(resultType);
-        default -> errorHandler.report(expr.operator(), "Expected binary operator.");
+        default -> errorHandler.report(expr.getOperator(), "Expected binary operator.");
       }
     } catch (ByteCodeException ex) {
-      errorHandler.report(expr.operator(), ex.getMessage());
+      errorHandler.report(expr.getOperator(), ex.getMessage());
     }
 
     return null;
@@ -87,36 +93,36 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
   @Override
   public Void visitGroupingExpr(Grouping expr) {
-    return expr.accept(this);
+    return expr.getExpr().accept(this);
   }
 
   @Override
   public Void visitLiteralExpr(Literal expr) {
-    writer.pushConstant(expr.value());
+    writer.pushConstant(expr.getValue());
     return null;
   }
 
   @Override
   public Void visitUnaryExpr(Unary expr) {
-    final var rightType = expr.right().accept(valueTypeVisitor);
+    final var rightType = expr.getRight().getValueType();
 
     try {
-      switch(expr.operator().tokenType()) {
+      switch(expr.getOperator().tokenType()) {
         case MINUS -> {
           if(!rightType.isNumeric()) {
-            errorHandler.report(expr.operator(), "Can only negate numeric values.");
+            errorHandler.report(expr.getOperator(), "Can only negate numeric values.");
             return null;
           }
 
-          expr.right().accept(this);
+          expr.getRight().accept(this);
 
           writer.pushConstant(-1);
           writer.writeMul(rightType);
         }
-        default -> errorHandler.report(expr.operator(), "Expected unary operator.");
+        default -> errorHandler.report(expr.getOperator(), "Expected unary operator.");
       }
     } catch (ByteCodeException ex) {
-      errorHandler.report(expr.operator(), ex.getMessage());
+      errorHandler.report(expr.getOperator(), ex.getMessage());
     }
 
     return null;
@@ -131,7 +137,7 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
   @Override
   public Void visitPrint(Print stmt) {
-    final var valueType = stmt.expression().accept(valueTypeVisitor);
+    final var valueType = stmt.expression().getValueType();
 
     writer.writePrint(valueType, () -> stmt.expression().accept(this));
 

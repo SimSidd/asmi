@@ -1,7 +1,6 @@
 package sh.sidd.asmi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -12,13 +11,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import sh.sidd.asmi.compiler.Compiler;
 import sh.sidd.asmi.parser.Parser;
 import sh.sidd.asmi.scanner.Scanner;
 
-public class EndToEndTestFactory {
+public class EndToEndTests {
 
   /** Runs all end-to-end tests in the "e2e" directory. */
   @TestFactory
@@ -58,10 +58,19 @@ public class EndToEndTestFactory {
     final var ast = parser.parse();
     final var compiler = new Compiler(errorHandler, ast);
 
-    assertFalse(expectedOutput.isBlank(), "Should have expected output.");
+    if (errorHandler.isHasError()) {
+      Assertions.fail("Should not have parse errors.");
+    }
+
+    if (expectedOutput.isBlank()) {
+      Assertions.fail("Should have expected output.");
+    }
 
     compiler.compile();
-    assertFalse(errorHandler.isHasError(), "Should not have errors.");
+
+    if (errorHandler.isHasError()) {
+      Assertions.fail("Should not have compile errors.");
+    }
 
     final var outStream = new ByteArrayOutputStream();
     final var originalOut = System.out;
