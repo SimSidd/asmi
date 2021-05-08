@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import sh.sidd.asmi.data.Token;
 import sh.sidd.asmi.data.TokenType;
-import sh.sidd.asmi.errors.ErrorHandler;
+import sh.sidd.asmi.ErrorHandler;
 
 class ScannerTest {
   private ErrorHandler errorHandler;

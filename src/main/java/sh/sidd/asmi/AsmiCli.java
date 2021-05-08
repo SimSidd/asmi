@@ -7,11 +7,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import sh.sidd.asmi.errors.ErrorHandler;
+import sh.sidd.asmi.parser.Parser;
 import sh.sidd.asmi.scanner.Scanner;
 
 /** CLI for the Asmi tool. */
 @Slf4j
+@SuppressWarnings({"PMD.SystemPrintln", "PMD.DoNotTerminateVM"})
 public class AsmiCli {
   private final List<String> args;
 
@@ -74,7 +75,8 @@ public class AsmiCli {
     var errorHandler = new ErrorHandler();
     var scanner = new Scanner(source, errorHandler);
     var tokens = scanner.scanTokens();
+    var parser = new Parser(errorHandler, tokens);
 
-    System.out.println(tokens.toString());
+    System.out.println(parser.parse());
   }
 }
