@@ -1,0 +1,11 @@
+# Output: 2
+print 1 + 1
+
+# Output: 2
+print 3 - 1
+
+# Output: 6
+print 3 * 2
+
+# Output: 3
+print 6 / 2

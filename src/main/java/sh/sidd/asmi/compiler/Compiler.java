@@ -41,7 +41,9 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     writer.endMethod();
 
     writer.finishClass();
+  }
 
+  public void run() {
     if(!errorHandler.isHasError()) {
       writer.run();
     }

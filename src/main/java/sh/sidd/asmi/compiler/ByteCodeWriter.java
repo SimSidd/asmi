@@ -57,8 +57,6 @@ public class ByteCodeWriter {
   }
 
   public void run() {
-    System.out.println(stringWriter);
-
     try {
       final var compiledClass =
           new AsmiClassLoader().defineClass("sh.sidd.asmi.Compiled", classWriter.toByteArray());
@@ -66,7 +64,8 @@ public class ByteCodeWriter {
 
       MethodUtils.invokeMethod(instance, "execute");
     } catch (Exception ex) {
-      log.error("Class creation failed", ex);
+      log.error("Failed to run class", ex);
+      System.out.println(stringWriter);
     }
   }
 

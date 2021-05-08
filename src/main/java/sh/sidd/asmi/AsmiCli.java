@@ -80,6 +80,7 @@ public class AsmiCli {
     final var compiler = new Compiler(errorHandler, ast);
 
     compiler.compile();
+    compiler.run();
 
     System.out.println();
   }

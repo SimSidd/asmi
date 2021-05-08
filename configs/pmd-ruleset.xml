@@ -18,6 +18,7 @@
     <exclude name="JUnitTestContainsTooManyAsserts"/>
     <exclude name="LiteralsFirstInComparisons"/>
     <exclude name="JUnitAssertionsShouldIncludeMessage"/>
+    <exclude name="SystemPrintln"/>
   </rule>
 
   <rule ref="category/java/codestyle.xml">
