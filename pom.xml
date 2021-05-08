@@ -12,11 +12,12 @@
     <maven.compiler.source>16</maven.compiler.source>
     <maven.compiler.target>16</maven.compiler.target>
 
+    <antlr.version>4.9.2</antlr.version>
     <asm.version>9.1</asm.version>
+    <commons-lang.version>3.12.0</commons-lang.version>
     <junit.version>5.7.1</junit.version>
     <lombok.version>1.18.20</lombok.version>
     <slf4j.version>1.7.30</slf4j.version>
-    <commons-lang.version>3.12.0</commons-lang.version>
   </properties>
 
   <dependencies>
@@ -63,6 +64,34 @@
       <artifactId>commons-lang3</artifactId>
       <version>${commons-lang.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.antlr</groupId>
+      <artifactId>antlr4</artifactId>
+      <version>${antlr.version}</version>
+    </dependency>
+
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr4-maven-plugin</artifactId>
+        <version>${antlr.version}</version>
+        <configuration>
+          <treatWarningsAsErrors>true</treatWarningsAsErrors>
+        </configuration>
+        <executions>
+          <execution>
+            <id>antlr</id>
+            <goals>
+              <goal>antlr4</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

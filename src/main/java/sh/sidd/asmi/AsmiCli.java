@@ -7,8 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import sh.sidd.asmi.parser.Parser;
-import sh.sidd.asmi.scanner.Scanner;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import sh.sidd.asmi.antlr.AsmiLexer;
+import sh.sidd.asmi.antlr.AsmiParser;
 
 /** CLI for the Asmi tool. */
 @Slf4j
@@ -72,11 +74,22 @@ public class AsmiCli {
    * @param source The source code to run.
    */
   private void run(String source) {
-    var errorHandler = new ErrorHandler();
-    var scanner = new Scanner(source, errorHandler);
-    var tokens = scanner.scanTokens();
-    var parser = new Parser(errorHandler, tokens);
+    var chars = CharStreams.fromString(source);
+    var lexer = new AsmiLexer(chars);
+    var tokens = new CommonTokenStream(lexer);
+    var parser = new AsmiParser(tokens);
 
-    System.out.println(parser.parse());
+    parser.setBuildParseTree(true);
+
+    var tree = parser.expression();
+
+    System.out.println(tree.equality().toStringTree(parser));
+
+    //    var errorHandler = new ErrorHandler();
+    //    var scanner = new Scanner(source, errorHandler);
+    //    var tokens = scanner.scanTokens();
+    //    var parser = new Parser(errorHandler, tokens);
+    //
+    //    System.out.println(parser.parse());
   }
 }
