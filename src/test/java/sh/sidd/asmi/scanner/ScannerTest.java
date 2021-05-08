@@ -35,8 +35,8 @@ class ScannerTest {
    * @param expectedTokens The expected tokens.
    */
   private void assertTokens(String source, List<Token> expectedTokens) {
-    var scanner = new Scanner(source, errorHandler);
-    var expected = new ArrayList<>(expectedTokens);
+    final var scanner = new Scanner(source, errorHandler);
+    final var expected = new ArrayList<>(expectedTokens);
 
     expected.add(new Token(TokenType.EOF, "", null, StringUtils.countMatches(source, "\n")));
 

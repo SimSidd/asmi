@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import sh.sidd.asmi.compiler.Compiler;
 import sh.sidd.asmi.parser.Parser;
 import sh.sidd.asmi.scanner.Scanner;
 
@@ -22,6 +23,11 @@ public class AsmiCli {
 
   /** Runs the CLI tool. */
   public void run() {
+    final var compiler = new Compiler();
+    compiler.visitEnd();
+    if(true)return;
+
+
     if (args.size() > 1) {
       System.out.println("Usage: asmi [script]");
       System.exit(1);
@@ -48,21 +54,20 @@ public class AsmiCli {
 
   /** Runs an interactive Asmi REPL. */
   private void runPrompt() {
-    var reader = new BufferedReader(new InputStreamReader(System.in));
+    try (var reader = new BufferedReader(new InputStreamReader(System.in))) {
 
-    while (true) {
-      try {
+      while (true) {
         System.out.print("> ");
-        var line = reader.readLine();
+        final var line = reader.readLine();
 
         if (line == null) {
           break;
         }
 
         run(line);
-      } catch (IOException ex) {
-        break;
       }
+    } catch (IOException ignored) {
+      // Ignore and exit normally
     }
   }
 
@@ -72,10 +77,10 @@ public class AsmiCli {
    * @param source The source code to run.
    */
   private void run(String source) {
-    var errorHandler = new ErrorHandler();
-    var scanner = new Scanner(source, errorHandler);
-    var tokens = scanner.scanTokens();
-    var parser = new Parser(errorHandler, tokens);
+    final var errorHandler = new ErrorHandler();
+    final var scanner = new Scanner(source, errorHandler);
+    final var tokens = scanner.scanTokens();
+    final var parser = new Parser(errorHandler, tokens);
 
     System.out.println(parser.parse());
   }
