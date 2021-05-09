@@ -11,6 +11,7 @@ import sh.sidd.asmi.data.Expr.UnaryExpr;
 import sh.sidd.asmi.data.Expr.VariableExpr;
 import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Stmt.AssertStmt;
+import sh.sidd.asmi.data.Stmt.AssignStmt;
 import sh.sidd.asmi.data.Stmt.ExpressionStmt;
 import sh.sidd.asmi.data.Stmt.PrintStmt;
 import sh.sidd.asmi.data.Stmt.VarStmt;
@@ -42,7 +43,6 @@ public class Parser {
       }
     } catch (ParserException ex) {
       errorHandler.report(ex.getToken(), ex.getMessage());
-      return null;
     }
 
     return statements;
@@ -62,7 +62,7 @@ public class Parser {
       return parseVarStatement();
     }
 
-    return parseExpressionStatement();
+    return parseAssignmentOrExpressionStatement();
   }
 
   /** Parses a `print` statement. */
@@ -86,9 +86,22 @@ public class Parser {
     }
   }
 
-  /** Parses an expression statement. */
-  private Stmt parseExpressionStatement() {
-    return new ExpressionStmt(parseExpression());
+  /** Parses a statement which is either an assignment or an expression. */
+  private Stmt parseAssignmentOrExpressionStatement() {
+    final var expr = parseExpression();
+
+    if(reader.advanceIfMatch(TokenType.EQUAL)) {
+      final var equalsToken = reader.previous();
+      final var value = parseExpression();
+
+      if(expr instanceof Expr.VariableExpr varExrp) {
+        return new AssignStmt(varExrp.getName(), value);
+      }
+
+      errorHandler.report(equalsToken, "Invalid assignment target.");
+    }
+
+    return new ExpressionStmt(expr);
   }
 
   /** Parses a single expression. */

@@ -14,6 +14,8 @@ public abstract class Stmt {
     R visitAssertStmt(AssertStmt stmt);
 
     R visitVarStmt(VarStmt stmt);
+
+    R visitAssignStmt(AssignStmt stmt);
   }
 
   /**
@@ -74,6 +76,21 @@ public abstract class Stmt {
     @Override
     public <R> R accept(Visitor<R> visitor) {
       return visitor.visitVarStmt(this);
+    }
+  }
+
+  public static class AssignStmt extends Stmt {
+    @Getter private final Token name;
+    @Getter private final Expr value;
+
+    public AssignStmt(Token name, Expr value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitAssignStmt(this);
     }
   }
 }

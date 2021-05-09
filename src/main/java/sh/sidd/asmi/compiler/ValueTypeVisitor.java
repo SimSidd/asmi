@@ -9,6 +9,7 @@ import sh.sidd.asmi.data.Expr.UnaryExpr;
 import sh.sidd.asmi.data.Expr.VariableExpr;
 import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Stmt.AssertStmt;
+import sh.sidd.asmi.data.Stmt.AssignStmt;
 import sh.sidd.asmi.data.Stmt.ExpressionStmt;
 import sh.sidd.asmi.data.Stmt.PrintStmt;
 import sh.sidd.asmi.data.Stmt.VarStmt;
@@ -80,13 +81,13 @@ public class ValueTypeVisitor implements Expr.Visitor<ValueType>, Stmt.Visitor<V
   @Override
   public ValueType visitPrintStmt(PrintStmt stmt) {
     stmt.getExpression().accept(this);
-    return null;
+    return ValueType.UNKNOWN;
   }
 
   @Override
   public ValueType visitAssertStmt(AssertStmt stmt) {
     stmt.getExpression().accept(this);
-    return null;
+    return ValueType.UNKNOWN;
   }
 
   @Override
@@ -97,6 +98,12 @@ public class ValueTypeVisitor implements Expr.Visitor<ValueType>, Stmt.Visitor<V
       errorHandler.report(stmt.getName(), e.getMessage());
     }
 
-    return null;
+    return ValueType.UNKNOWN;
+  }
+
+  @Override
+  public ValueType visitAssignStmt(AssignStmt stmt) {
+    stmt.getValue().accept(this);
+    return ValueType.UNKNOWN;
   }
 }

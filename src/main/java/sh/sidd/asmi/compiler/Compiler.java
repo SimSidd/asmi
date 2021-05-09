@@ -11,6 +11,7 @@ import sh.sidd.asmi.data.Expr.UnaryExpr;
 import sh.sidd.asmi.data.Expr.VariableExpr;
 import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Stmt.AssertStmt;
+import sh.sidd.asmi.data.Stmt.AssignStmt;
 import sh.sidd.asmi.data.Stmt.ExpressionStmt;
 import sh.sidd.asmi.data.Stmt.PrintStmt;
 import sh.sidd.asmi.data.Stmt.VarStmt;
@@ -188,6 +189,20 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     try {
       writer.storeVariable(stmt.getInitializer().getValueType(),
+          variableEnv.getVariableIndex(stmt.getName().lexeme()));
+    } catch (VariableEnvException e) {
+      errorHandler.report(stmt.getName(), e.getMessage());
+    }
+
+    return null;
+  }
+
+  @Override
+  public Void visitAssignStmt(AssignStmt stmt) {
+    stmt.getValue().accept(this);
+
+    try {
+      writer.storeVariable(stmt.getValue().getValueType(),
           variableEnv.getVariableIndex(stmt.getName().lexeme()));
     } catch (VariableEnvException e) {
       errorHandler.report(stmt.getName(), e.getMessage());

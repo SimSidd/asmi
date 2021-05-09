@@ -9,6 +9,7 @@ import sh.sidd.asmi.data.Expr.UnaryExpr;
 import sh.sidd.asmi.data.Expr.VariableExpr;
 import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Stmt.AssertStmt;
+import sh.sidd.asmi.data.Stmt.AssignStmt;
 import sh.sidd.asmi.data.Stmt.ExpressionStmt;
 import sh.sidd.asmi.data.Stmt.PrintStmt;
 import sh.sidd.asmi.data.Stmt.VarStmt;
@@ -94,7 +95,13 @@ public class SourceLineVisitor
 
   @Override
   public Pair<Integer, Integer> visitVarStmt(VarStmt stmt) {
-    final var rangeInitializer = stmt.getInitializer().accept(this);
-    return Pair.of(stmt.getName().line(), rangeInitializer.getRight());
+    final var initRange = stmt.getInitializer().accept(this);
+    return Pair.of(stmt.getName().line(), initRange.getRight());
+  }
+
+  @Override
+  public Pair<Integer, Integer> visitAssignStmt(AssignStmt stmt) {
+    final var valueRange = stmt.getValue().accept(this);
+    return Pair.of(stmt.getName().line(), valueRange.getRight());
   }
 }
