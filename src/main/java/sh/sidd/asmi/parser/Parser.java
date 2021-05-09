@@ -45,19 +45,26 @@ public class Parser {
       return parsePrintStatement();
     }
 
+    if (reader.advanceIfMatch(TokenType.ASSERT)) {
+      return parseAssertStatement();
+    }
+
     return parseExpressionStatement();
   }
 
-  /** Parses a single `print` statement. */
+  /** Parses a `print` statement. */
   private Stmt parsePrintStatement() {
-    final var value = parseExpression();
-    return new Stmt.Print(value);
+    return new Stmt.Print(parseExpression());
   }
 
-  /** Parses a single expression statement. */
+  /** Parses a `assert` statement. */
+  private Stmt parseAssertStatement() {
+    return new Stmt.Assert(parseExpression());
+  }
+
+  /** Parses an expression statement. */
   private Stmt parseExpressionStatement() {
-    final var expr = parseExpression();
-    return new Stmt.Expression(expr);
+    return new Stmt.Expression(parseExpression());
   }
 
   /** Parses a single expression. */
@@ -128,19 +135,19 @@ public class Parser {
   /** Parses a single primary-expression. */
   private Expr parsePrimary() {
     if (reader.advanceIfMatch(TokenType.FALSE)) {
-      return new Expr.Literal(false);
+      return new Expr.Literal(reader.previous(), false);
     }
 
     if (reader.advanceIfMatch(TokenType.TRUE)) {
-      return new Expr.Literal(true);
+      return new Expr.Literal(reader.previous(), true);
     }
 
     if (reader.advanceIfMatch(TokenType.NULL)) {
-      return new Expr.Literal(null);
+      return new Expr.Literal(reader.previous(), null);
     }
 
     if (reader.advanceIfMatch(TokenType.NUMBER, TokenType.STRING)) {
-      return new Expr.Literal(reader.previous().literal());
+      return new Expr.Literal(reader.previous(), reader.previous().literal());
     }
 
     if (reader.advanceIfMatch(TokenType.LEFT_PAREN)) {

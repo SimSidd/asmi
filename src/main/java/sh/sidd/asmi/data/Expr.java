@@ -5,10 +5,13 @@ import lombok.Setter;
 import lombok.ToString;
 
 /** Base interface for all expressions. */
-public interface Expr {
+public abstract class Expr {
+  @Getter @Setter private ValueType valueType;
+  @Getter @Setter private int lineStart;
+  @Getter @Setter private int lineEnd;
 
   /** Visitor pattern to visit each expression. */
-  interface Visitor<R> {
+  public interface Visitor<R> {
     R visitBinaryExpr(Binary expr);
 
     R visitGroupingExpr(Grouping expr);
@@ -23,24 +26,13 @@ public interface Expr {
    *
    * @param visitor The visitor to use.
    */
-  <R> R accept(Visitor<R> visitor);
-
-  /** Returns the type of this expression. */
-  ValueType getValueType();
-
-  /**
-   * Sets the type of this expression.
-   *
-   * @param valueType The type of this expression.
-   */
-  void setValueType(ValueType valueType);
+  public abstract <R> R accept(Visitor<R> visitor);
 
   @ToString
-  class Binary implements Expr {
+  public static class Binary extends Expr {
     @Getter private final Expr left;
     @Getter private final Token operator;
     @Getter private final Expr right;
-    @Getter @Setter private ValueType valueType;
 
     public Binary(Expr left, Token operator, Expr right) {
       this.left = left;
@@ -55,9 +47,8 @@ public interface Expr {
   }
 
   @ToString
-  class Grouping implements Expr {
+  public static class Grouping extends Expr {
     @Getter private final Expr expr;
-    @Getter @Setter private ValueType valueType;
 
     public Grouping(Expr expr) {
       this.expr = expr;
@@ -70,11 +61,12 @@ public interface Expr {
   }
 
   @ToString
-  class Literal implements Expr {
+  public static class Literal extends Expr {
+    @Getter private final Token token;
     @Getter private final Object value;
-    @Getter @Setter private ValueType valueType;
 
-    public Literal(Object value) {
+    public Literal(Token token, Object value) {
+      this.token = token;
       this.value = value;
     }
 
@@ -85,10 +77,9 @@ public interface Expr {
   }
 
   @ToString
-  class Unary implements Expr {
+  public static class Unary extends Expr {
     @Getter private final Token operator;
     @Getter private final Expr right;
-    @Getter @Setter private ValueType valueType;
 
     public Unary(Token operator, Expr right) {
       this.operator = operator;

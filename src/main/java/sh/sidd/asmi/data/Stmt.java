@@ -1,16 +1,17 @@
 package sh.sidd.asmi.data;
 
-/**
- * Base interface for all statements.
- */
+import lombok.Getter;
+
+/** Base interface for all statements. */
 public interface Stmt {
 
-  /**
-   * Visitor pattern to visit each statement.
-   */
+  /** Visitor pattern to visit each statement. */
   interface Visitor<R> {
     R visitExpression(Expression stmt);
+
     R visitPrint(Print stmt);
+
+    R visitAssert(Assert stmt);
   }
 
   /**
@@ -20,7 +21,12 @@ public interface Stmt {
    */
   <R> R accept(Visitor<R> visitor);
 
-  record Expression(Expr expression) implements Stmt {
+  class Expression implements Stmt {
+    @Getter private final Expr expression;
+
+    public Expression(Expr expression) {
+      this.expression = expression;
+    }
 
     @Override
     public <R> R accept(Visitor<R> visitor) {
@@ -28,10 +34,29 @@ public interface Stmt {
     }
   }
 
-  record Print(Expr expression) implements Stmt {
+  class Print implements Stmt {
+    @Getter private final Expr expression;
+
+    public Print(Expr expression) {
+      this.expression = expression;
+    }
+
     @Override
     public <R> R accept(Visitor<R> visitor) {
       return visitor.visitPrint(this);
+    }
+  }
+
+  class Assert implements Stmt {
+    @Getter private final Expr expression;
+
+    public Assert(Expr expression) {
+      this.expression = expression;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitAssert(this);
     }
   }
 }

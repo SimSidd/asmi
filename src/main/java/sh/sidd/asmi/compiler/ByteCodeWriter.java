@@ -2,10 +2,12 @@ package sh.sidd.asmi.compiler;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.TraceClassVisitor;
@@ -56,17 +58,16 @@ public class ByteCodeWriter {
     classVisitor.visitEnd();
   }
 
-  public void run() {
-    try {
+  public void run() throws Throwable {
       final var compiledClass =
           new AsmiClassLoader().defineClass("sh.sidd.asmi.Compiled", classWriter.toByteArray());
       final var instance = compiledClass.getDeclaredConstructor().newInstance();
 
-      MethodUtils.invokeMethod(instance, "execute");
-    } catch (Exception ex) {
-      log.error("Failed to run class", ex);
-      System.out.println(stringWriter);
-    }
+      try {
+        MethodUtils.invokeMethod(instance, "execute");
+      } catch (InvocationTargetException ex) {
+        throw ex.getTargetException();
+      }
   }
 
   public void startMethod() {
@@ -208,20 +209,103 @@ public class ByteCodeWriter {
   }
 
   /**
-   * Writes the bytecode for to call System.out.println.
+   * Writes call to System.out.println.
    *
    * @param valueType The type which the current value has.
-   * @param printValue A runnable which puts the value to print on the stack.
+   * @param setValue A runnable which puts the value to print on the stack.
    */
-  public void writePrint(ValueType valueType, Runnable printValue) {
+  public void writePrint(ValueType valueType, Runnable setValue) {
     final var descriptor = "(" + valueType.toDescriptor() +")V";
 
     methodVisitor.visitFieldInsn(
         Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
 
-    printValue.run();
+    setValue.run();
 
     methodVisitor.visitMethodInsn(
         Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", descriptor, false);
+  }
+
+  /**
+   * Writes the bytecode for to an `assert` statement.
+   *
+   * `assert` checks if the current value on the stack equals 0 and throws {@link AssertionError}
+   * if it is.
+   *
+   * @param message The message for the {@link AssertionError}.
+   */
+  public void writeAssert(String message) {
+    final var continuation = new Label();
+
+    methodVisitor.visitJumpInsn(Opcodes.IFNE, continuation);
+
+    methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/AssertionError");
+    methodVisitor.visitInsn(Opcodes.DUP);
+
+    methodVisitor.visitLdcInsn(message);
+
+    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/AssertionError",
+        "<init>", "(Ljava/lang/Object;)V", false);
+    methodVisitor.visitInsn(Opcodes.ATHROW);
+
+    methodVisitor.visitLabel(continuation);
+  }
+
+  /**
+   * Writes *CMP for the given types.
+   *
+   * Pushes `1` onto the stack if the values are equal, otherwise '0'.
+   *
+   * @param valueType The type of the current values.
+   */
+  public void writeCmp(ValueType valueType) throws ByteCodeException {
+    if(!valueType.isNumeric()) {
+      throw new ByteCodeException("Cannot compare non-numeric types.");
+    }
+
+    final var continuationLabel = new Label();
+    final var equalLabel = new Label();
+
+    if(valueType == ValueType.FLOAT) {
+      methodVisitor.visitInsn(Opcodes.FCMPG);
+      methodVisitor.visitJumpInsn(Opcodes.IFEQ, equalLabel);
+    } else if(valueType == ValueType.DOUBLE) {
+      methodVisitor.visitInsn(Opcodes.DCMPG);
+      methodVisitor.visitJumpInsn(Opcodes.IFEQ, equalLabel);
+    } else if(valueType == ValueType.LONG) {
+      methodVisitor.visitInsn(Opcodes.LCMP);
+      methodVisitor.visitJumpInsn(Opcodes.IFEQ, equalLabel);
+    } else {
+      methodVisitor.visitJumpInsn(Opcodes.IF_ICMPEQ, equalLabel);
+    }
+
+    methodVisitor.visitInsn(Opcodes.ICONST_0);
+    methodVisitor.visitJumpInsn(Opcodes.GOTO, continuationLabel);
+
+    methodVisitor.visitLabel(equalLabel);
+    methodVisitor.visitInsn(Opcodes.ICONST_1);
+
+    methodVisitor.visitLabel(continuationLabel);
+  }
+
+  /**
+   * Writes *NEG for the given type.
+   *
+   * @param valueType The type of the current value.
+   */
+  public void writeNeg(ValueType valueType) throws ByteCodeException {
+    final var opcode = switch(valueType) {
+      case SHORT, INT -> Opcodes.INEG;
+      case LONG -> Opcodes.LNEG;
+      case FLOAT -> Opcodes.FNEG;
+      case DOUBLE -> Opcodes.DNEG;
+      default -> null;
+    };
+
+    if(opcode == null) {
+      throw new ByteCodeException("Cannot negate non-numeric types.");
+    }
+
+    methodVisitor.visitInsn(opcode);
   }
 }

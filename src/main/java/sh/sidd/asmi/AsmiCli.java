@@ -77,10 +77,15 @@ public class AsmiCli {
     final var tokens = scanner.scanTokens();
     final var parser = new Parser(errorHandler, tokens);
     final var ast = parser.parse();
-    final var compiler = new Compiler(errorHandler, ast);
+    final var compiler = new Compiler(errorHandler, ast, scanner);
 
     compiler.compile();
-    compiler.run();
+
+    try {
+      compiler.run();
+    } catch (Throwable e) {
+      log.error("Failed to run", e);
+    }
 
     System.out.println();
   }

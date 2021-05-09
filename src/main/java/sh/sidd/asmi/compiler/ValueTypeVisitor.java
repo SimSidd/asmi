@@ -6,11 +6,12 @@ import sh.sidd.asmi.data.Expr.Grouping;
 import sh.sidd.asmi.data.Expr.Literal;
 import sh.sidd.asmi.data.Expr.Unary;
 import sh.sidd.asmi.data.Stmt;
+import sh.sidd.asmi.data.Stmt.Assert;
 import sh.sidd.asmi.data.Stmt.Expression;
 import sh.sidd.asmi.data.Stmt.Print;
 import sh.sidd.asmi.data.ValueType;
 
-/** Visitor which determines the {@link ValueType} for a given expression. */
+/** Visitor which determines the {@link ValueType} for expressions. */
 public class ValueTypeVisitor implements Expr.Visitor<ValueType>, Stmt.Visitor<ValueType> {
 
   @Override
@@ -47,14 +48,20 @@ public class ValueTypeVisitor implements Expr.Visitor<ValueType>, Stmt.Visitor<V
 
   @Override
   public ValueType visitExpression(Expression stmt) {
-    final var valueType = stmt.expression().accept(this);
-    stmt.expression().setValueType(valueType);
+    final var valueType = stmt.getExpression().accept(this);
+    stmt.getExpression().setValueType(valueType);
     return valueType;
   }
 
   @Override
   public ValueType visitPrint(Print stmt) {
-    stmt.expression().accept(this);
+    stmt.getExpression().accept(this);
+    return null;
+  }
+
+  @Override
+  public ValueType visitAssert(Assert stmt) {
+    stmt.getExpression().accept(this);
     return null;
   }
 }

@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Asmi" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="sh.sidd.asmi.AsmiMain" />
+    <module name="asmi" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

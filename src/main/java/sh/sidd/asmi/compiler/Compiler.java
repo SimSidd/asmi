@@ -9,9 +9,11 @@ import sh.sidd.asmi.data.Expr.Grouping;
 import sh.sidd.asmi.data.Expr.Literal;
 import sh.sidd.asmi.data.Expr.Unary;
 import sh.sidd.asmi.data.Stmt;
+import sh.sidd.asmi.data.Stmt.Assert;
 import sh.sidd.asmi.data.Stmt.Expression;
 import sh.sidd.asmi.data.Stmt.Print;
 import sh.sidd.asmi.data.ValueType;
+import sh.sidd.asmi.scanner.SourceRetriever;
 
 @Slf4j
 public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
@@ -19,9 +21,12 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   private final ErrorHandler errorHandler;
   private final ByteCodeWriter writer;
   private final List<Stmt> ast;
+  private final SourceRetriever sourceRetriever;
 
-  public Compiler(ErrorHandler errorHandler, List<Stmt> ast) {
+  public Compiler(ErrorHandler errorHandler, List<Stmt> ast,
+      SourceRetriever sourceRetriever) {
     this.errorHandler = errorHandler;
+    this.sourceRetriever = sourceRetriever;
     writer = new ByteCodeWriter();
     this.ast = ast;
   }
@@ -29,6 +34,7 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   /** Compiles the AST into a .class file. */
   public void compile() {
     final var valueTypeVisitor = new ValueTypeVisitor();
+    final var sourceLineVisitor = new SourceLineVisitor();
 
     if(ast == null) {
       return;
@@ -36,6 +42,7 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     for(final var stmt : ast) {
       stmt.accept(valueTypeVisitor);
+      stmt.accept(sourceLineVisitor);
     }
 
     writer.startClass();
@@ -49,7 +56,7 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     writer.finishClass();
   }
 
-  public void run() {
+  public void run() throws Throwable {
     if(!errorHandler.isHasError()) {
       writer.run();
     }
@@ -82,6 +89,11 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         case MINUS -> writer.writeSub(resultType);
         case STAR -> writer.writeMul(resultType);
         case SLASH -> writer.writeDiv(resultType);
+        case EQUAL_EQUAL -> writer.writeCmp(resultType);
+        case BANG_EQUAL -> {
+          writer.writeCmp(resultType);
+          writer.writeNeg(resultType);
+        }
         default -> errorHandler.report(expr.getOperator(), "Expected binary operator.");
       }
     } catch (ByteCodeException ex) {
@@ -115,9 +127,7 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
           }
 
           expr.getRight().accept(this);
-
-          writer.pushConstant(-1);
-          writer.writeMul(rightType);
+          writer.writeNeg(rightType);
         }
         default -> errorHandler.report(expr.getOperator(), "Expected unary operator.");
       }
@@ -130,16 +140,27 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
   @Override
   public Void visitExpression(Expression stmt) {
-    stmt.expression().accept(this);
+    stmt.getExpression().accept(this);
 
     return null;
   }
 
   @Override
   public Void visitPrint(Print stmt) {
-    final var valueType = stmt.expression().getValueType();
+    final var valueType = stmt.getExpression().getValueType();
 
-    writer.writePrint(valueType, () -> stmt.expression().accept(this));
+    writer.writePrint(valueType, () -> stmt.getExpression().accept(this));
+
+    return null;
+  }
+
+  @Override
+  public Void visitAssert(Assert stmt) {
+    stmt.getExpression().accept(this);
+
+    writer.writeAssert(sourceRetriever.getLines(
+        stmt.getExpression().getLineStart(),
+        stmt.getExpression().getLineEnd()));
 
     return null;
   }

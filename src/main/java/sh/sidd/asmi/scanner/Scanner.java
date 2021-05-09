@@ -1,6 +1,7 @@
 package sh.sidd.asmi.scanner;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import sh.sidd.asmi.ErrorHandler;
@@ -8,8 +9,9 @@ import sh.sidd.asmi.data.Token;
 import sh.sidd.asmi.data.TokenType;
 
 /** Scans Asmi source code and generates a list of tokens. */
-public class Scanner {
+public class Scanner implements SourceRetriever {
   private final String source;
+  private final List<String> sourceLines;
   private final SourceReader reader;
   private final List<Token> tokens = new ArrayList<>();
   private final Map<String, TokenType> keywordTokens;
@@ -20,6 +22,7 @@ public class Scanner {
   public Scanner(String source, ErrorHandler errorHandler) {
     this.reader = new SourceReader(source);
     this.source = source;
+    this.sourceLines = Arrays.asList(source.split("\\n"));
     this.errorHandler = errorHandler;
     this.keywordTokens = TokenType.getKeywordTokens();
   }
@@ -209,5 +212,14 @@ public class Scanner {
    */
   private boolean isAlphaNumeric(char c) {
      return isAlpha(c) || isDigit(c);
+  }
+
+  @Override
+  public String getLine(int line) {
+    if(line >= sourceLines.size()) {
+      throw new ScannerException(String.format("Cannot retrieve line at %d", line));
+    }
+
+    return sourceLines.get(line);
   }
 }

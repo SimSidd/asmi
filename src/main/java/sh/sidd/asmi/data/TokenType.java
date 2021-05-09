@@ -54,6 +54,7 @@ public enum TokenType {
   VAR("var"),
   WHILE("while"),
   CLASS("class"),
+  ASSERT("assert"),
 
   EOF;
 
