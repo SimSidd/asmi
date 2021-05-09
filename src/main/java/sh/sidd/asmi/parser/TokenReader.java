@@ -33,15 +33,23 @@ public class TokenReader {
   /**
    * Checks if the token at the current position has the given type.
    *
-   * @param type The token type to check for.
+   * @param types The token types to check for.
    * @return {@code true} If the current token matched.
    */
-  public boolean check(TokenType type) {
+  public boolean check(TokenType... types) {
     if (isAtEnd()) {
       return false;
     }
 
-    return peek().tokenType() == type;
+    final var peekType = peek().tokenType();
+
+    for (final var type : types) {
+      if (peekType == type) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /** Checks whether the current position is at the end of the token stream. */

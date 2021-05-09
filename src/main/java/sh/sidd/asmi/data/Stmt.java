@@ -1,5 +1,6 @@
 package sh.sidd.asmi.data;
 
+import java.util.List;
 import lombok.Getter;
 
 /** Base interface for all statements. */
@@ -16,6 +17,12 @@ public abstract class Stmt {
     R visitVarStmt(VarStmt stmt);
 
     R visitAssignStmt(AssignStmt stmt);
+
+    R visitBlockStmt(BlockStmt stmt);
+
+    R visitDefStmt(DefStmt stmt);
+
+    R visitIfStmt(IfStmt stmt);
   }
 
   /**
@@ -91,6 +98,51 @@ public abstract class Stmt {
     @Override
     public <R> R accept(Visitor<R> visitor) {
       return visitor.visitAssignStmt(this);
+    }
+  }
+
+  public static class BlockStmt extends Stmt {
+    @Getter private final List<Stmt> statements;
+
+    public BlockStmt(List<Stmt> statements) {
+      this.statements = statements;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitBlockStmt(this);
+    }
+  }
+
+  public static class DefStmt extends Stmt {
+    @Getter private final Token name;
+    @Getter private final Stmt block;
+
+    public DefStmt(Token name, Stmt block) {
+      this.name = name;
+      this.block = block;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitDefStmt(this);
+    }
+  }
+
+  public static class IfStmt extends Stmt {
+    @Getter private final Expr condition;
+    @Getter private final Stmt thenBlock;
+    @Getter private final Stmt elseBlock;
+
+    public IfStmt(Expr condition, Stmt thenBlock, Stmt elseBlock) {
+      this.condition = condition;
+      this.thenBlock = thenBlock;
+      this.elseBlock = elseBlock;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitIfStmt(this);
     }
   }
 }

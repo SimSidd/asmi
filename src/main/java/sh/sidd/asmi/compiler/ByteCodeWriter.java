@@ -17,7 +17,7 @@ import sh.sidd.asmi.data.ValueType;
 @Slf4j
 public class ByteCodeWriter {
   private final ClassWriter classWriter;
-  private final StringWriter stringWriter;
+  private final StringWriter traceStringWriter;
   private final TraceClassVisitor traceClassVisitor;
   private final ClassVisitor classVisitor;
   private MethodVisitor methodVisitor;
@@ -33,8 +33,8 @@ public class ByteCodeWriter {
 
   public ByteCodeWriter() {
     classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-    stringWriter = new StringWriter();
-    traceClassVisitor = new TraceClassVisitor(classWriter, new PrintWriter(stringWriter));
+    traceStringWriter = new StringWriter();
+    traceClassVisitor = new TraceClassVisitor(classWriter, new PrintWriter(traceStringWriter));
     classVisitor = traceClassVisitor;
     methodVisitor = null;
   }
@@ -62,8 +62,6 @@ public class ByteCodeWriter {
   }
 
   public void run() throws Throwable {
-    System.out.println(stringWriter.toString());
-
     final var compiledClass =
         new AsmiClassLoader().defineClass("sh.sidd.asmi.Compiled", classWriter.toByteArray());
     final var instance = compiledClass.getDeclaredConstructor().newInstance();
@@ -353,5 +351,34 @@ public class ByteCodeWriter {
     };
 
     methodVisitor.visitVarInsn(opcode, index);
+  }
+
+  /**
+   * Writes the bytecode for an if-then-else block.
+   *
+   * @param setupCondition A runnable which pushes 1 onto the stack if the 'if' condition is true.
+   *   If the condition is false 0 should be pushed to the stack.
+   * @param thenBlock A runnable which executes the then-block.
+   * @param elseBlock A runnable which executes the else-block.
+   */
+  public void writeIfThenElse(Runnable setupCondition, Runnable thenBlock, Runnable elseBlock) {
+    final var continuationLabel = new Label();
+
+    setupCondition.run();
+
+    if(elseBlock == null) {
+      methodVisitor.visitJumpInsn(Opcodes.IFEQ, continuationLabel);
+      thenBlock.run();
+    } else {
+      final var elseLabel = new Label();
+
+      methodVisitor.visitJumpInsn(Opcodes.IFEQ, elseLabel);
+      thenBlock.run();
+      methodVisitor.visitJumpInsn(Opcodes.GOTO, continuationLabel);
+      methodVisitor.visitLabel(elseLabel);
+      elseBlock.run();
+    }
+
+    methodVisitor.visitLabel(continuationLabel);
   }
 }

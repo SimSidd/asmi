@@ -46,6 +46,7 @@ public enum TokenType {
   TRUE("true"),
   FALSE("false"),
   DEF("def"),
+  END("end"),
   FOR("for"),
   NULL("null"),
   PRINT("print"),

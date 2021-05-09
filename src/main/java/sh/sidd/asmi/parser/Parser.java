@@ -12,7 +12,10 @@ import sh.sidd.asmi.data.Expr.VariableExpr;
 import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Stmt.AssertStmt;
 import sh.sidd.asmi.data.Stmt.AssignStmt;
+import sh.sidd.asmi.data.Stmt.BlockStmt;
+import sh.sidd.asmi.data.Stmt.DefStmt;
 import sh.sidd.asmi.data.Stmt.ExpressionStmt;
+import sh.sidd.asmi.data.Stmt.IfStmt;
 import sh.sidd.asmi.data.Stmt.PrintStmt;
 import sh.sidd.asmi.data.Stmt.VarStmt;
 import sh.sidd.asmi.data.Token;
@@ -37,12 +40,12 @@ public class Parser {
   public List<Stmt> parse() {
     final var statements = new ArrayList<Stmt>();
 
-    try {
-      while (!reader.isAtEnd()) {
+    while (!reader.isAtEnd()) {
+      try {
         statements.add(parseStatement());
+      } catch (ParserException ex) {
+        errorHandler.report(ex.getToken(), ex.getMessage());
       }
-    } catch (ParserException ex) {
-      errorHandler.report(ex.getToken(), ex.getMessage());
     }
 
     return statements;
@@ -60,6 +63,14 @@ public class Parser {
 
     if (reader.advanceIfMatch(TokenType.VAR)) {
       return parseVarStatement();
+    }
+
+    if (reader.advanceIfMatch(TokenType.DEF)) {
+      return parseDefStatement();
+    }
+
+    if (reader.advanceIfMatch(TokenType.IF)) {
+      return parseIfStatement();
     }
 
     return parseAssignmentOrExpressionStatement();
@@ -84,6 +95,47 @@ public class Parser {
     } else {
       return new VarStmt(name, null);
     }
+  }
+
+  /**
+   * Parses statements until a given end token appears.
+   *
+   * The end-token should still be verified and consumed.
+   */
+  private BlockStmt parseBlock(TokenType ...endTokens) {
+    final var statements = new ArrayList<Stmt>();
+
+    while(!reader.isAtEnd() && !reader.check(endTokens)) {
+      statements.add(parseStatement());
+    }
+
+    return new BlockStmt(statements);
+  }
+
+  /** Parses a `def` statement. */
+  private DefStmt parseDefStatement() {
+    final var name = reader.consumeExpected(TokenType.IDENTIFIER, "Expected method name.");
+    final var block = parseBlock(TokenType.END);
+
+    reader.consumeExpected(TokenType.END, "Expected 'end' after method block.");
+
+    return new DefStmt(name, block);
+  }
+
+  /** Parses a `if` statement. */
+  private IfStmt parseIfStatement() {
+    final var condition = parseExpression();
+    final var thenBlock = parseBlock(TokenType.ELSE, TokenType.END);
+    Stmt elseBlock = null;
+
+    if(reader.advanceIfMatch(TokenType.ELSE)) {
+      elseBlock = parseBlock(TokenType.END);
+      reader.consumeExpected(TokenType.END, "Expected 'end' after 'else' block.");
+    } else {
+      reader.consumeExpected(TokenType.END, "Expected 'end' after 'if' block.");
+    }
+
+    return new IfStmt(condition, thenBlock, elseBlock);
   }
 
   /** Parses a statement which is either an assignment or an expression. */

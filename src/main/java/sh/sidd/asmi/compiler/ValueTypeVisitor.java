@@ -10,7 +10,10 @@ import sh.sidd.asmi.data.Expr.VariableExpr;
 import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Stmt.AssertStmt;
 import sh.sidd.asmi.data.Stmt.AssignStmt;
+import sh.sidd.asmi.data.Stmt.BlockStmt;
+import sh.sidd.asmi.data.Stmt.DefStmt;
 import sh.sidd.asmi.data.Stmt.ExpressionStmt;
+import sh.sidd.asmi.data.Stmt.IfStmt;
 import sh.sidd.asmi.data.Stmt.PrintStmt;
 import sh.sidd.asmi.data.Stmt.VarStmt;
 import sh.sidd.asmi.data.ValueType;
@@ -104,6 +107,33 @@ public class ValueTypeVisitor implements Expr.Visitor<ValueType>, Stmt.Visitor<V
   @Override
   public ValueType visitAssignStmt(AssignStmt stmt) {
     stmt.getValue().accept(this);
+    return ValueType.UNKNOWN;
+  }
+
+  @Override
+  public ValueType visitBlockStmt(BlockStmt stmt) {
+    for(final var s : stmt.getStatements()) {
+      s.accept(this);
+    }
+
+    return ValueType.UNKNOWN;
+  }
+
+  @Override
+  public ValueType visitDefStmt(DefStmt stmt) {
+    stmt.getBlock().accept(this);
+    return ValueType.UNKNOWN;
+  }
+
+  @Override
+  public ValueType visitIfStmt(IfStmt stmt) {
+    stmt.getCondition().accept(this);
+    stmt.getThenBlock().accept(this);
+
+    if (stmt.getElseBlock() != null) {
+      stmt.getElseBlock().accept(this);
+    }
+
     return ValueType.UNKNOWN;
   }
 }

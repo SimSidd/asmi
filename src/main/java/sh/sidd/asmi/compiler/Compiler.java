@@ -12,7 +12,10 @@ import sh.sidd.asmi.data.Expr.VariableExpr;
 import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Stmt.AssertStmt;
 import sh.sidd.asmi.data.Stmt.AssignStmt;
+import sh.sidd.asmi.data.Stmt.BlockStmt;
+import sh.sidd.asmi.data.Stmt.DefStmt;
 import sh.sidd.asmi.data.Stmt.ExpressionStmt;
+import sh.sidd.asmi.data.Stmt.IfStmt;
 import sh.sidd.asmi.data.Stmt.PrintStmt;
 import sh.sidd.asmi.data.Stmt.VarStmt;
 import sh.sidd.asmi.data.ValueType;
@@ -209,6 +212,37 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     } catch (VariableEnvException e) {
       errorHandler.report(stmt.getName(), e.getMessage());
     }
+
+    return null;
+  }
+
+  @Override
+  public Void visitBlockStmt(BlockStmt stmt) {
+    for(final var s : stmt.getStatements()) {
+      s.accept(this);
+    }
+
+    return null;
+  }
+
+  @Override
+  public Void visitDefStmt(DefStmt stmt) {
+    stmt.getBlock().accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visitIfStmt(IfStmt stmt) {
+    Runnable elseRunnable = null;
+
+    if(stmt.getElseBlock() != null) {
+      elseRunnable = () -> stmt.getElseBlock().accept(this);
+    }
+
+    writer.writeIfThenElse(
+        () -> stmt.getCondition().accept(this),
+        () -> stmt.getThenBlock().accept(this),
+        elseRunnable);
 
     return null;
   }

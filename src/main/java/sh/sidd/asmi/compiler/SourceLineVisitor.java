@@ -10,13 +10,15 @@ import sh.sidd.asmi.data.Expr.VariableExpr;
 import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Stmt.AssertStmt;
 import sh.sidd.asmi.data.Stmt.AssignStmt;
+import sh.sidd.asmi.data.Stmt.BlockStmt;
+import sh.sidd.asmi.data.Stmt.DefStmt;
 import sh.sidd.asmi.data.Stmt.ExpressionStmt;
+import sh.sidd.asmi.data.Stmt.IfStmt;
 import sh.sidd.asmi.data.Stmt.PrintStmt;
 import sh.sidd.asmi.data.Stmt.VarStmt;
 
 /** Visitor which determines the source lines for expressions. */
-public class SourceLineVisitor
-    implements Expr.Visitor<Pair<Integer, Integer>>, Stmt.Visitor<Pair<Integer, Integer>> {
+public class SourceLineVisitor implements Expr.Visitor<Pair<Integer, Integer>>, Stmt.Visitor<Void> {
 
   @Override
   public Pair<Integer, Integer> visitBinaryExpr(BinaryExpr expr) {
@@ -74,34 +76,59 @@ public class SourceLineVisitor
   }
 
   @Override
-  public Pair<Integer, Integer> visitExpressionStmt(ExpressionStmt stmt) {
-    final var range = stmt.getExpression().accept(this);
-
-    stmt.getExpression().setLineStart(range.getLeft());
-    stmt.getExpression().setLineEnd(range.getRight());
-
-    return range;
+  public Void visitExpressionStmt(ExpressionStmt stmt) {
+    stmt.getExpression().accept(this);
+    return null;
   }
 
   @Override
-  public Pair<Integer, Integer> visitPrintStmt(PrintStmt stmt) {
-    return stmt.getExpression().accept(this);
+  public Void visitPrintStmt(PrintStmt stmt) {
+    stmt.getExpression().accept(this);
+    return null;
   }
 
   @Override
-  public Pair<Integer, Integer> visitAssertStmt(AssertStmt stmt) {
-    return stmt.getExpression().accept(this);
+  public Void visitAssertStmt(AssertStmt stmt) {
+    stmt.getExpression().accept(this);
+    return null;
   }
 
   @Override
-  public Pair<Integer, Integer> visitVarStmt(VarStmt stmt) {
-    final var initRange = stmt.getInitializer().accept(this);
-    return Pair.of(stmt.getName().line(), initRange.getRight());
+  public Void visitVarStmt(VarStmt stmt) {
+    stmt.getInitializer().accept(this);
+    return null;
   }
 
   @Override
-  public Pair<Integer, Integer> visitAssignStmt(AssignStmt stmt) {
-    final var valueRange = stmt.getValue().accept(this);
-    return Pair.of(stmt.getName().line(), valueRange.getRight());
+  public Void visitAssignStmt(AssignStmt stmt) {
+    stmt.getValue().accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visitBlockStmt(BlockStmt stmt) {
+    for (final var s : stmt.getStatements()) {
+      s.accept(this);
+    }
+
+    return null;
+  }
+
+  @Override
+  public Void visitDefStmt(DefStmt stmt) {
+    stmt.getBlock().accept(this);
+    return null;
+  }
+
+  @Override
+  public Void visitIfStmt(IfStmt stmt) {
+    stmt.getCondition().accept(this);
+    stmt.getThenBlock().accept(this);
+
+    if (stmt.getElseBlock() != null) {
+      stmt.getElseBlock().accept(this);
+    }
+
+    return null;
   }
 }
