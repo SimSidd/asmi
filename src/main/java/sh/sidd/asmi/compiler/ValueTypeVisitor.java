@@ -7,7 +7,7 @@ import sh.sidd.asmi.data.Expr.Literal;
 import sh.sidd.asmi.data.Expr.Unary;
 import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Stmt.Assert;
-import sh.sidd.asmi.data.Stmt.Expression;
+import sh.sidd.asmi.data.Stmt.ExpressionStatement;
 import sh.sidd.asmi.data.Stmt.Print;
 import sh.sidd.asmi.data.ValueType;
 
@@ -47,7 +47,7 @@ public class ValueTypeVisitor implements Expr.Visitor<ValueType>, Stmt.Visitor<V
   }
 
   @Override
-  public ValueType visitExpression(Expression stmt) {
+  public ValueType visitExpression(ExpressionStatement stmt) {
     final var valueType = stmt.getExpression().accept(this);
     stmt.getExpression().setValueType(valueType);
     return valueType;

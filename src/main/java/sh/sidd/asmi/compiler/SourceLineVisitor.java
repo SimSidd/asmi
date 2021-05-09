@@ -2,22 +2,14 @@ package sh.sidd.asmi.compiler;
 
 import org.apache.commons.lang3.tuple.Pair;
 import sh.sidd.asmi.data.Expr;
-import sh.sidd.asmi.data.Expr.Binary;
-import sh.sidd.asmi.data.Expr.Grouping;
-import sh.sidd.asmi.data.Expr.Literal;
-import sh.sidd.asmi.data.Expr.Unary;
 import sh.sidd.asmi.data.Stmt;
-import sh.sidd.asmi.data.Stmt.Assert;
-import sh.sidd.asmi.data.Stmt.Expression;
-import sh.sidd.asmi.data.Stmt.Print;
-import sh.sidd.asmi.data.ValueType;
 
 /** Visitor which determines the source lines for expressions. */
 public class SourceLineVisitor
     implements Expr.Visitor<Pair<Integer, Integer>>, Stmt.Visitor<Pair<Integer, Integer>> {
 
   @Override
-  public Pair<Integer, Integer> visitBinaryExpr(Binary expr) {
+  public Pair<Integer, Integer> visitBinaryExpr(Expr.Binary expr) {
     final var leftRange = expr.getLeft().accept(this);
     final var rightRange = expr.getRight().accept(this);
     final var resultRange = Pair.of(leftRange.getLeft(), rightRange.getRight());
@@ -29,7 +21,7 @@ public class SourceLineVisitor
   }
 
   @Override
-  public Pair<Integer, Integer> visitGroupingExpr(Grouping expr) {
+  public Pair<Integer, Integer> visitGroupingExpr(Expr.Grouping expr) {
     final var groupRange = expr.getExpr().accept(this);
 
     expr.setLineStart(groupRange.getLeft());
@@ -39,7 +31,7 @@ public class SourceLineVisitor
   }
 
   @Override
-  public Pair<Integer, Integer> visitLiteralExpr(Literal expr) {
+  public Pair<Integer, Integer> visitLiteralExpr(Expr.Literal expr) {
     final var line = expr.getToken().line();
     final var range = Pair.of(line, line);
 
@@ -50,7 +42,7 @@ public class SourceLineVisitor
   }
 
   @Override
-  public Pair<Integer, Integer> visitUnaryExpr(Unary expr) {
+  public Pair<Integer, Integer> visitUnaryExpr(Expr.Unary expr) {
     final var lineStart = expr.getOperator().line();
     final var rightRange = expr.getRight().accept(this);
     final var resultRange = Pair.of(lineStart, rightRange.getRight());
@@ -62,7 +54,7 @@ public class SourceLineVisitor
   }
 
   @Override
-  public Pair<Integer, Integer> visitExpression(Expression stmt) {
+  public Pair<Integer, Integer> visitExpression(Stmt.ExpressionStatement stmt) {
     final var range = stmt.getExpression().accept(this);
 
     stmt.getExpression().setLineStart(range.getLeft());
@@ -72,7 +64,7 @@ public class SourceLineVisitor
   }
 
   @Override
-  public Pair<Integer, Integer> visitPrint(Print stmt) {
+  public Pair<Integer, Integer> visitPrint(Stmt.Print stmt) {
     final var range = stmt.getExpression().accept(this);
 
     stmt.getExpression().setLineStart(range.getLeft());
@@ -82,7 +74,7 @@ public class SourceLineVisitor
   }
 
   @Override
-  public Pair<Integer, Integer> visitAssert(Assert stmt) {
+  public Pair<Integer, Integer> visitAssert(Stmt.Assert stmt) {
     final var range = stmt.getExpression().accept(this);
 
     stmt.getExpression().setLineStart(range.getLeft());

@@ -3,11 +3,11 @@ package sh.sidd.asmi.data;
 import lombok.Getter;
 
 /** Base interface for all statements. */
-public interface Stmt {
+public abstract class Stmt {
 
   /** Visitor pattern to visit each statement. */
-  interface Visitor<R> {
-    R visitExpression(Expression stmt);
+  public interface Visitor<R> {
+    R visitExpression(ExpressionStatement stmt);
 
     R visitPrint(Print stmt);
 
@@ -19,12 +19,12 @@ public interface Stmt {
    *
    * @param visitor The visitor to use.
    */
-  <R> R accept(Visitor<R> visitor);
+  public abstract <R> R accept(Visitor<R> visitor);
 
-  class Expression implements Stmt {
+  public static class ExpressionStatement extends Stmt {
     @Getter private final Expr expression;
 
-    public Expression(Expr expression) {
+    public ExpressionStatement(Expr expression) {
       this.expression = expression;
     }
 
@@ -34,7 +34,7 @@ public interface Stmt {
     }
   }
 
-  class Print implements Stmt {
+  public static class Print extends Stmt {
     @Getter private final Expr expression;
 
     public Print(Expr expression) {
@@ -47,7 +47,7 @@ public interface Stmt {
     }
   }
 
-  class Assert implements Stmt {
+  public static class Assert extends Stmt {
     @Getter private final Expr expression;
 
     public Assert(Expr expression) {

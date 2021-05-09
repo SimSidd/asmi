@@ -10,7 +10,7 @@ import sh.sidd.asmi.data.Expr.Literal;
 import sh.sidd.asmi.data.Expr.Unary;
 import sh.sidd.asmi.data.Stmt;
 import sh.sidd.asmi.data.Stmt.Assert;
-import sh.sidd.asmi.data.Stmt.Expression;
+import sh.sidd.asmi.data.Stmt.ExpressionStatement;
 import sh.sidd.asmi.data.Stmt.Print;
 import sh.sidd.asmi.data.ValueType;
 import sh.sidd.asmi.scanner.SourceRetriever;
@@ -139,7 +139,7 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Void visitExpression(Expression stmt) {
+  public Void visitExpression(ExpressionStatement stmt) {
     stmt.getExpression().accept(this);
 
     return null;

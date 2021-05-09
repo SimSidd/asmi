@@ -5,6 +5,7 @@ import java.util.List;
 import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.data.Expr;
 import sh.sidd.asmi.data.Stmt;
+import sh.sidd.asmi.data.Stmt.ExpressionStatement;
 import sh.sidd.asmi.data.Token;
 import sh.sidd.asmi.data.TokenType;
 
@@ -64,7 +65,7 @@ public class Parser {
 
   /** Parses an expression statement. */
   private Stmt parseExpressionStatement() {
-    return new Stmt.Expression(parseExpression());
+    return new Stmt.ExpressionStatement(parseExpression());
   }
 
   /** Parses a single expression. */
