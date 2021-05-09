@@ -19,6 +19,7 @@
     <exclude name="LiteralsFirstInComparisons"/>
     <exclude name="JUnitAssertionsShouldIncludeMessage"/>
     <exclude name="SystemPrintln"/>
+    <exclude name="JUnitTestsShouldIncludeAssert"/>
   </rule>
 
   <rule ref="category/java/codestyle.xml">

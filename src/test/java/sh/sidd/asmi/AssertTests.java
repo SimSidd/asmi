@@ -7,13 +7,13 @@ public class AssertTests {
 
   @Test
   public void shouldNotThrowOnAssertTrue() {
-    Assertions.assertDoesNotThrow(() -> TestUtil.runSource("assert true"));
-    Assertions.assertDoesNotThrow(() -> TestUtil.runSource("assert 1"));
+    Assertions.assertDoesNotThrow(() -> AsmiTestUtil.runSource("assert true"));
+    Assertions.assertDoesNotThrow(() -> AsmiTestUtil.runSource("assert 1"));
   }
 
   @Test
   public void shouldThrowOnAssertFalse() {
-    Assertions.assertThrows(AssertionError.class, () -> TestUtil.runSource("assert false"));
-    Assertions.assertThrows(AssertionError.class, () -> TestUtil.runSource("assert 0"));
+    Assertions.assertThrows(AssertionError.class, () -> AsmiTestUtil.runSource("assert false"));
+    Assertions.assertThrows(AssertionError.class, () -> AsmiTestUtil.runSource("assert 0"));
   }
 }

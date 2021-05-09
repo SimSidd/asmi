@@ -1,8 +1,0 @@
-assert 1 - 2 * 3 == -5
-
-assert (1 - 2) * 3 == -3
-assert ((1 - 2) * 3) + 1 == -2
-
-assert 5 / 2 == 2
-assert 5 / 2.0 == 2.5
-assert 5.0 / 2 == 2.5
