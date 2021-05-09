@@ -56,8 +56,10 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
       stmt.accept(this);
     }
 
-    writer.endMethod();
-    writer.finishClass();
+    if(!errorHandler.hasErrors()) {
+      writer.endMethod();
+      writer.finishClass();
+    }
   }
 
   public void run() throws Throwable {

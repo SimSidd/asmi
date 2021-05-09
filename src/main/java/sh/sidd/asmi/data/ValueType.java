@@ -47,6 +47,10 @@ public enum ValueType {
 
   /** Attempts to find the correct resulting type for implicitly cast operations. */
   public static ValueType findImplicitCastType(ValueType typeOne, ValueType typeTwo) {
+    if(typeOne == null || typeTwo == null) {
+      return UNKNOWN;
+    }
+
     if(typeOne == typeTwo) {
       return typeOne;
     }

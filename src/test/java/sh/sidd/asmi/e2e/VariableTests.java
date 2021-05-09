@@ -64,4 +64,23 @@ public class VariableTests {
 
     AsmiTestUtil.assertCompileError(source, "Error at 'v1': Identifier already exists.");
   }
+
+  @Test
+  void shouldFailOnUndeclaredVariablesInAssignment() {
+    final var source = """
+      v = 0
+      """;
+
+    AsmiTestUtil.assertCompileError(source, "Error at 'v': Unknown variable: v");
+  }
+
+  @Test
+  void shouldFailOnUndeclaredVariablesInExpression() {
+    final var source = """
+      assert v == 0
+      """;
+
+    // TODO Make this only one error. Currently it also reports "Operands must be numeric"
+    AsmiTestUtil.assertCompileError(source, "Error at 'v': Unknown variable: v");
+  }
 }

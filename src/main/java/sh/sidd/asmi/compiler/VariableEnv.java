@@ -9,11 +9,17 @@ public class VariableEnv {
 
   private record VariableEntry(ValueType valueType, int index) {}
 
+  private final VariableEnv enclosingEnv;
   private final Map<String, VariableEntry> variables;
   private int currentLocalVariableSize;
 
   public VariableEnv() {
-    variables = new HashMap<>();
+    this(null);
+  }
+
+  public VariableEnv(VariableEnv enclosingEnv) {
+    this.enclosingEnv = enclosingEnv;
+    this.variables = new HashMap<>();
   }
 
   /**
@@ -37,11 +43,15 @@ public class VariableEnv {
    * @return The index of the identifier.
    */
   public int getVariableIndex(String identifier) throws VariableEnvException {
-    if (!variables.containsKey(identifier)) {
-      throw new VariableEnvException("Unknown variable: " + identifier);
+    if (variables.containsKey(identifier)) {
+      return variables.get(identifier).index();
     }
 
-    return variables.get(identifier).index();
+    if (enclosingEnv != null) {
+      return enclosingEnv.getVariableIndex(identifier);
+    }
+
+    throw new VariableEnvException("Unknown variable: " + identifier);
   }
 
   /**
@@ -54,6 +64,7 @@ public class VariableEnv {
     if (variables.containsKey(identifier)) {
       throw new VariableEnvException("Identifier already exists.");
     }
+
     variables.put(identifier, new VariableEntry(valueType, currentLocalVariableSize++));
   }
 }

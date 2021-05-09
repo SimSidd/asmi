@@ -26,6 +26,8 @@ public final class AsmiTestUtil {
 
     final var allErrors = String.join("\n", errorHandler.getErrors());
     assertThat(allErrors).contains(message);
+
+    // TODO Assert that there is only one error.
   }
 
   /**
