@@ -1,4 +1,4 @@
-package sh.sidd.asmi.scanner;
+package sh.sidd.asmi;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,8 +11,9 @@ import org.junit.jupiter.api.Test;
 import sh.sidd.asmi.data.Token;
 import sh.sidd.asmi.data.TokenType;
 import sh.sidd.asmi.ErrorHandler;
+import sh.sidd.asmi.scanner.Scanner;
 
-class ScannerTest {
+class ScannerTests {
   private ErrorHandler errorHandler;
 
   @BeforeEach
