@@ -1,8 +1,10 @@
-package sh.sidd.asmi;
+package sh.sidd.asmi.e2e;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+import org.assertj.core.api.Assertions;
+import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.compiler.Compiler;
 import sh.sidd.asmi.parser.Parser;
 import sh.sidd.asmi.scanner.Scanner;
@@ -20,7 +22,7 @@ public final class AsmiTestUtil {
   public static void assertCompileError(String source, String message) {
     final var errorHandler = compileSource(source);
 
-    assertThat(errorHandler.hasErrors()).isTrue();
+    Assertions.assertThat(errorHandler.hasErrors()).isTrue();
 
     final var allErrors = String.join("\n", errorHandler.getErrors());
     assertThat(allErrors).contains(message);

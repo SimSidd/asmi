@@ -1,4 +1,4 @@
-package sh.sidd.asmi;
+package sh.sidd.asmi.e2e;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
