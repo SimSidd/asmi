@@ -4,8 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.data.Expr;
+import sh.sidd.asmi.data.Expr.BinaryExpr;
+import sh.sidd.asmi.data.Expr.GroupingExpr;
+import sh.sidd.asmi.data.Expr.LiteralExpr;
+import sh.sidd.asmi.data.Expr.UnaryExpr;
+import sh.sidd.asmi.data.Expr.VariableExpr;
 import sh.sidd.asmi.data.Stmt;
-import sh.sidd.asmi.data.Stmt.ExpressionStatement;
+import sh.sidd.asmi.data.Stmt.AssertStmt;
+import sh.sidd.asmi.data.Stmt.ExpressionStmt;
+import sh.sidd.asmi.data.Stmt.PrintStmt;
+import sh.sidd.asmi.data.Stmt.VarStmt;
 import sh.sidd.asmi.data.Token;
 import sh.sidd.asmi.data.TokenType;
 
@@ -50,22 +58,37 @@ public class Parser {
       return parseAssertStatement();
     }
 
+    if (reader.advanceIfMatch(TokenType.VAR)) {
+      return parseVarStatement();
+    }
+
     return parseExpressionStatement();
   }
 
   /** Parses a `print` statement. */
   private Stmt parsePrintStatement() {
-    return new Stmt.Print(parseExpression());
+    return new PrintStmt(parseExpression());
   }
 
   /** Parses a `assert` statement. */
   private Stmt parseAssertStatement() {
-    return new Stmt.Assert(parseExpression());
+    return new AssertStmt(parseExpression());
+  }
+
+  /** Parses a `var` statement. */
+  private Stmt parseVarStatement() {
+    final var name = reader.consumeExpected(TokenType.IDENTIFIER, "Expected variable name.");
+
+    if (reader.advanceIfMatch(TokenType.EQUAL)) {
+      return new VarStmt(name, parseExpression());
+    } else {
+      return new VarStmt(name, null);
+    }
   }
 
   /** Parses an expression statement. */
   private Stmt parseExpressionStatement() {
-    return new Stmt.ExpressionStatement(parseExpression());
+    return new ExpressionStmt(parseExpression());
   }
 
   /** Parses a single expression. */
@@ -80,7 +103,7 @@ public class Parser {
     while (reader.advanceIfMatch(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)) {
       final var operator = reader.previous();
       final var right = parseComparison();
-      expr = new Expr.Binary(expr, operator, right);
+      expr = new BinaryExpr(expr, operator, right);
     }
 
     return expr;
@@ -93,7 +116,7 @@ public class Parser {
         TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL)) {
       final var operator = reader.previous();
       final var right = parseTerm();
-      expr = new Expr.Binary(expr, operator, right);
+      expr = new BinaryExpr(expr, operator, right);
     }
 
     return expr;
@@ -105,7 +128,7 @@ public class Parser {
     while (reader.advanceIfMatch(TokenType.MINUS, TokenType.PLUS)) {
       final var operator = reader.previous();
       final var right = parseFactor();
-      expr = new Expr.Binary(expr, operator, right);
+      expr = new BinaryExpr(expr, operator, right);
     }
 
     return expr;
@@ -117,7 +140,7 @@ public class Parser {
     while (reader.advanceIfMatch(TokenType.SLASH, TokenType.STAR)) {
       final var operator = reader.previous();
       final var right = parseUnary();
-      expr = new Expr.Binary(expr, operator, right);
+      expr = new BinaryExpr(expr, operator, right);
     }
 
     return expr;
@@ -127,7 +150,7 @@ public class Parser {
     if (reader.advanceIfMatch(TokenType.BANG, TokenType.MINUS)) {
       final var operator = reader.previous();
       final var right = parseUnary();
-      return new Expr.Unary(operator, right);
+      return new UnaryExpr(operator, right);
     }
 
     return parsePrimary();
@@ -136,25 +159,29 @@ public class Parser {
   /** Parses a single primary-expression. */
   private Expr parsePrimary() {
     if (reader.advanceIfMatch(TokenType.FALSE)) {
-      return new Expr.Literal(reader.previous(), false);
+      return new LiteralExpr(reader.previous(), false);
     }
 
     if (reader.advanceIfMatch(TokenType.TRUE)) {
-      return new Expr.Literal(reader.previous(), true);
+      return new LiteralExpr(reader.previous(), true);
     }
 
     if (reader.advanceIfMatch(TokenType.NULL)) {
-      return new Expr.Literal(reader.previous(), null);
+      return new LiteralExpr(reader.previous(), null);
     }
 
     if (reader.advanceIfMatch(TokenType.NUMBER, TokenType.STRING)) {
-      return new Expr.Literal(reader.previous(), reader.previous().literal());
+      return new LiteralExpr(reader.previous(), reader.previous().literal());
     }
 
     if (reader.advanceIfMatch(TokenType.LEFT_PAREN)) {
       final var expr = parseExpression();
       reader.consumeExpected(TokenType.RIGHT_PAREN, "Expected ')' after expression.");
-      return new Expr.Grouping(expr);
+      return new GroupingExpr(expr);
+    }
+
+    if (reader.advanceIfMatch(TokenType.IDENTIFIER)) {
+      return new VariableExpr(reader.previous());
     }
 
     throw new ParserException(reader.peek(), "Expected expression.");

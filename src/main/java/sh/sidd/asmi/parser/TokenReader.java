@@ -73,11 +73,12 @@ public class TokenReader {
    *
    * @param expected The expected token type.
    * @param message The error message if the type did not match.
+   * @return The consumed token.
    * @throws ParserException If the token type did not match.
    */
-  public void consumeExpected(TokenType expected, String message) {
+  public Token consumeExpected(TokenType expected, String message) {
     if (check(expected)) {
-      readAndAdvance();
+      return readAndAdvance();
     } else {
       throw new ParserException(peek(), message);
     }

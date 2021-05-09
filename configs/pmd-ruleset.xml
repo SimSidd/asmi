@@ -38,6 +38,7 @@
     <exclude name="ExcessiveMethodLength"/>
     <exclude name="AvoidCatchingGenericException"/>
     <exclude name="CyclomaticComplexity"/>
+    <exclude name="NPathComplexity"/>
   </rule>
 
   <rule ref="category/java/errorprone.xml">

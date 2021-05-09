@@ -12,13 +12,15 @@ public abstract class Expr {
 
   /** Visitor pattern to visit each expression. */
   public interface Visitor<R> {
-    R visitBinaryExpr(Binary expr);
+    R visitBinaryExpr(BinaryExpr expr);
 
-    R visitGroupingExpr(Grouping expr);
+    R visitGroupingExpr(GroupingExpr expr);
 
-    R visitLiteralExpr(Literal expr);
+    R visitLiteralExpr(LiteralExpr expr);
 
-    R visitUnaryExpr(Unary expr);
+    R visitUnaryExpr(UnaryExpr expr);
+
+    R visitVariableExpr(VariableExpr expr);
   }
 
   /**
@@ -29,12 +31,12 @@ public abstract class Expr {
   public abstract <R> R accept(Visitor<R> visitor);
 
   @ToString
-  public static class Binary extends Expr {
+  public static class BinaryExpr extends Expr {
     @Getter private final Expr left;
     @Getter private final Token operator;
     @Getter private final Expr right;
 
-    public Binary(Expr left, Token operator, Expr right) {
+    public BinaryExpr(Expr left, Token operator, Expr right) {
       this.left = left;
       this.operator = operator;
       this.right = right;
@@ -47,10 +49,10 @@ public abstract class Expr {
   }
 
   @ToString
-  public static class Grouping extends Expr {
+  public static class GroupingExpr extends Expr {
     @Getter private final Expr expr;
 
-    public Grouping(Expr expr) {
+    public GroupingExpr(Expr expr) {
       this.expr = expr;
     }
 
@@ -61,11 +63,11 @@ public abstract class Expr {
   }
 
   @ToString
-  public static class Literal extends Expr {
+  public static class LiteralExpr extends Expr {
     @Getter private final Token token;
     @Getter private final Object value;
 
-    public Literal(Token token, Object value) {
+    public LiteralExpr(Token token, Object value) {
       this.token = token;
       this.value = value;
     }
@@ -77,11 +79,11 @@ public abstract class Expr {
   }
 
   @ToString
-  public static class Unary extends Expr {
+  public static class UnaryExpr extends Expr {
     @Getter private final Token operator;
     @Getter private final Expr right;
 
-    public Unary(Token operator, Expr right) {
+    public UnaryExpr(Token operator, Expr right) {
       this.operator = operator;
       this.right = right;
     }
@@ -89,6 +91,20 @@ public abstract class Expr {
     @Override
     public <R> R accept(Visitor<R> visitor) {
       return visitor.visitUnaryExpr(this);
+    }
+  }
+
+  @ToString
+  public static class VariableExpr extends Expr {
+    @Getter private final Token name;
+
+    public VariableExpr(Token name) {
+      this.name = name;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitVariableExpr(this);
     }
   }
 }

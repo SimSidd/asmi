@@ -1,5 +1,6 @@
 package sh.sidd.asmi;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -22,7 +23,7 @@ public class EndToEndTests {
                 (path, basicFileAttributes) -> path.toString().endsWith(".asmi"))
             .toList();
 
-    assertTrue(files.size() > 0, "Should have end-to-end tests");
+    assertThat(files.size()).isGreaterThan(0);
 
     return files.stream()
         .map(p -> DynamicTest.dynamicTest(p.getFileName().toString(), () -> runEndToEnd(p)));

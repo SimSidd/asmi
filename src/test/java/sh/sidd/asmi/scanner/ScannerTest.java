@@ -1,5 +1,6 @@
 package sh.sidd.asmi.scanner;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
@@ -40,8 +41,7 @@ class ScannerTest {
 
     expected.add(new Token(TokenType.EOF, "", null, StringUtils.countMatches(source, "\n")));
 
-    assertEquals(expected, scanner.scanTokens());
-
-    assertFalse(errorHandler.isHasError(), "Should not report any errors.");
+    assertThat(scanner.scanTokens()).isEqualTo(expected);
+    assertThat(errorHandler.hasErrors()).isFalse();
   }
 }

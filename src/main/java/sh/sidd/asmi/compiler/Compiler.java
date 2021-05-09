@@ -4,14 +4,16 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.data.Expr;
-import sh.sidd.asmi.data.Expr.Binary;
-import sh.sidd.asmi.data.Expr.Grouping;
-import sh.sidd.asmi.data.Expr.Literal;
-import sh.sidd.asmi.data.Expr.Unary;
+import sh.sidd.asmi.data.Expr.BinaryExpr;
+import sh.sidd.asmi.data.Expr.GroupingExpr;
+import sh.sidd.asmi.data.Expr.LiteralExpr;
+import sh.sidd.asmi.data.Expr.UnaryExpr;
+import sh.sidd.asmi.data.Expr.VariableExpr;
 import sh.sidd.asmi.data.Stmt;
-import sh.sidd.asmi.data.Stmt.Assert;
-import sh.sidd.asmi.data.Stmt.ExpressionStatement;
-import sh.sidd.asmi.data.Stmt.Print;
+import sh.sidd.asmi.data.Stmt.AssertStmt;
+import sh.sidd.asmi.data.Stmt.ExpressionStmt;
+import sh.sidd.asmi.data.Stmt.PrintStmt;
+import sh.sidd.asmi.data.Stmt.VarStmt;
 import sh.sidd.asmi.data.ValueType;
 import sh.sidd.asmi.scanner.SourceRetriever;
 
@@ -22,6 +24,7 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   private final ByteCodeWriter writer;
   private final List<Stmt> ast;
   private final SourceRetriever sourceRetriever;
+  private final VariableEnv variableEnv = new VariableEnv();
 
   public Compiler(ErrorHandler errorHandler, List<Stmt> ast,
       SourceRetriever sourceRetriever) {
@@ -33,7 +36,7 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
   /** Compiles the AST into a .class file. */
   public void compile() {
-    final var valueTypeVisitor = new ValueTypeVisitor();
+    final var valueTypeVisitor = new ValueTypeVisitor(variableEnv, errorHandler);
     final var sourceLineVisitor = new SourceLineVisitor();
 
     if(ast == null) {
@@ -57,13 +60,13 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 
   public void run() throws Throwable {
-    if(!errorHandler.isHasError()) {
+    if(!errorHandler.hasErrors()) {
       writer.run();
     }
   }
 
   @Override
-  public Void visitBinaryExpr(Binary expr) {
+  public Void visitBinaryExpr(BinaryExpr expr) {
     final var leftType = expr.getLeft().getValueType();
     final var rightType = expr.getRight().getValueType();
     final var resultType = ValueType.findImplicitCastType(leftType, rightType);
@@ -104,18 +107,18 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Void visitGroupingExpr(Grouping expr) {
+  public Void visitGroupingExpr(GroupingExpr expr) {
     return expr.getExpr().accept(this);
   }
 
   @Override
-  public Void visitLiteralExpr(Literal expr) {
-    writer.pushConstant(expr.getValue());
+  public Void visitLiteralExpr(LiteralExpr expr) {
+    writer.writeConstant(expr.getValue());
     return null;
   }
 
   @Override
-  public Void visitUnaryExpr(Unary expr) {
+  public Void visitUnaryExpr(UnaryExpr expr) {
     final var rightType = expr.getRight().getValueType();
 
     try {
@@ -139,14 +142,26 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Void visitExpression(ExpressionStatement stmt) {
+  public Void visitVariableExpr(VariableExpr expr) {
+    try {
+      writer.loadVariable(expr.getValueType(),
+          variableEnv.getVariableIndex(expr.getName().lexeme()));
+    } catch (VariableEnvException e) {
+      errorHandler.report(expr.getName(), e.getMessage());
+    }
+
+    return null;
+  }
+
+  @Override
+  public Void visitExpressionStmt(ExpressionStmt stmt) {
     stmt.getExpression().accept(this);
 
     return null;
   }
 
   @Override
-  public Void visitPrint(Print stmt) {
+  public Void visitPrintStmt(PrintStmt stmt) {
     final var valueType = stmt.getExpression().getValueType();
 
     writer.writePrint(valueType, () -> stmt.getExpression().accept(this));
@@ -155,12 +170,28 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 
   @Override
-  public Void visitAssert(Assert stmt) {
+  public Void visitAssertStmt(AssertStmt stmt) {
     stmt.getExpression().accept(this);
 
     writer.writeAssert(sourceRetriever.getLines(
         stmt.getExpression().getLineStart(),
         stmt.getExpression().getLineEnd()));
+
+    return null;
+  }
+
+  @Override
+  public Void visitVarStmt(VarStmt stmt) {
+    if(stmt.getInitializer() != null) {
+      stmt.getInitializer().accept(this);
+    }
+
+    try {
+      writer.storeVariable(stmt.getInitializer().getValueType(),
+          variableEnv.getVariableIndex(stmt.getName().lexeme()));
+    } catch (VariableEnvException e) {
+      errorHandler.report(stmt.getName(), e.getMessage());
+    }
 
     return null;
   }

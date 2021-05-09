@@ -7,11 +7,13 @@ public abstract class Stmt {
 
   /** Visitor pattern to visit each statement. */
   public interface Visitor<R> {
-    R visitExpression(ExpressionStatement stmt);
+    R visitExpressionStmt(ExpressionStmt stmt);
 
-    R visitPrint(Print stmt);
+    R visitPrintStmt(PrintStmt stmt);
 
-    R visitAssert(Assert stmt);
+    R visitAssertStmt(AssertStmt stmt);
+
+    R visitVarStmt(VarStmt stmt);
   }
 
   /**
@@ -21,42 +23,57 @@ public abstract class Stmt {
    */
   public abstract <R> R accept(Visitor<R> visitor);
 
-  public static class ExpressionStatement extends Stmt {
+  public static class ExpressionStmt extends Stmt {
     @Getter private final Expr expression;
 
-    public ExpressionStatement(Expr expression) {
+    public ExpressionStmt(Expr expression) {
       this.expression = expression;
     }
 
     @Override
     public <R> R accept(Visitor<R> visitor) {
-      return visitor.visitExpression(this);
+      return visitor.visitExpressionStmt(this);
     }
   }
 
-  public static class Print extends Stmt {
+  public static class PrintStmt extends Stmt {
     @Getter private final Expr expression;
 
-    public Print(Expr expression) {
+    public PrintStmt(Expr expression) {
       this.expression = expression;
     }
 
     @Override
     public <R> R accept(Visitor<R> visitor) {
-      return visitor.visitPrint(this);
+      return visitor.visitPrintStmt(this);
     }
   }
 
-  public static class Assert extends Stmt {
+  public static class AssertStmt extends Stmt {
     @Getter private final Expr expression;
 
-    public Assert(Expr expression) {
+    public AssertStmt(Expr expression) {
       this.expression = expression;
     }
 
     @Override
     public <R> R accept(Visitor<R> visitor) {
-      return visitor.visitAssert(this);
+      return visitor.visitAssertStmt(this);
+    }
+  }
+
+  public static class VarStmt extends Stmt {
+    @Getter private final Token name;
+    @Getter private final Expr initializer;
+
+    public VarStmt(Token name, Expr initializer) {
+      this.name = name;
+      this.initializer = initializer;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitVarStmt(this);
     }
   }
 }

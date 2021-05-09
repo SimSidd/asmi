@@ -22,6 +22,9 @@ public class ByteCodeWriter {
   private final ClassVisitor classVisitor;
   private MethodVisitor methodVisitor;
 
+  private Label methodStart;
+  private Label methodEnd;
+
   private static class AsmiClassLoader extends ClassLoader {
     public Class<?> defineClass(String name, byte[] b) {
       return defineClass(name, b, 0, b.length);
@@ -59,23 +62,32 @@ public class ByteCodeWriter {
   }
 
   public void run() throws Throwable {
-      final var compiledClass =
-          new AsmiClassLoader().defineClass("sh.sidd.asmi.Compiled", classWriter.toByteArray());
-      final var instance = compiledClass.getDeclaredConstructor().newInstance();
+    System.out.println(stringWriter.toString());
 
-      try {
-        MethodUtils.invokeMethod(instance, "execute");
-      } catch (InvocationTargetException ex) {
-        throw ex.getTargetException();
-      }
+    final var compiledClass =
+        new AsmiClassLoader().defineClass("sh.sidd.asmi.Compiled", classWriter.toByteArray());
+    final var instance = compiledClass.getDeclaredConstructor().newInstance();
+
+    try {
+      MethodUtils.invokeMethod(instance, "execute");
+    } catch (InvocationTargetException ex) {
+      throw ex.getTargetException();
+    }
   }
 
   public void startMethod() {
     methodVisitor = classVisitor.visitMethod(Opcodes.ACC_PUBLIC, "execute", "()V", null, null);
     methodVisitor.visitCode();
+
+    methodStart = new Label();
+    methodEnd = new Label();
+
+    methodVisitor.visitLabel(methodStart);
   }
 
   public void endMethod() {
+    methodVisitor.visitLabel(methodEnd);
+
     methodVisitor.visitInsn(Opcodes.RETURN);
 
     // CheckClassAdapter does not work together with ClassWriter.COMPUTE_FRAMES and requires to have
@@ -90,7 +102,7 @@ public class ByteCodeWriter {
    *
    * @param value The value to push.
    */
-  public void pushConstant(Object value) {
+  public void writeConstant(Object value) {
     methodVisitor.visitLdcInsn(value);
   }
 
@@ -307,5 +319,39 @@ public class ByteCodeWriter {
     }
 
     methodVisitor.visitInsn(opcode);
+  }
+
+  /**
+   * Stores the current value on the stack as a variable.
+   *
+   * @param valueType The type of the variable.
+   * @param index The index of the variable to store.
+   */
+  public void storeVariable(ValueType valueType, int index) {
+    final var opcode = switch(valueType) {
+      case SHORT, INT -> Opcodes.ISTORE;
+      case FLOAT -> Opcodes.FSTORE;
+      case DOUBLE -> Opcodes.DSTORE;
+      default -> Opcodes.ASTORE;
+    };
+
+    methodVisitor.visitVarInsn(opcode, index);
+  }
+
+  /**
+   * Loads the value of the given variable onto the stack.
+   *
+   * @param valueType The type of the variable to load.
+   * @param index The index of the variable to load.
+   */
+  public void loadVariable(ValueType valueType, int index) {
+    final var opcode = switch(valueType) {
+      case SHORT, INT -> Opcodes.ILOAD;
+      case FLOAT -> Opcodes.FLOAD;
+      case DOUBLE -> Opcodes.DLOAD;
+      default -> Opcodes.ALOAD;
+    };
+
+    methodVisitor.visitVarInsn(opcode, index);
   }
 }
