@@ -1,14 +1,19 @@
 package sh.sidd.asmi.scanner;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.data.Token;
 import sh.sidd.asmi.data.TokenType;
 
-/** Scans Asmi source code and generates a list of tokens. */
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Scans Asmi source code and generates a list of {@link Token}.
+ *
+ * See {@link sh.sidd.asmi.parser.Parser} on how {@link Token} are processed.
+ */
 public class Scanner implements SourceRetriever {
   private final String source;
   private final List<String> sourceLines;

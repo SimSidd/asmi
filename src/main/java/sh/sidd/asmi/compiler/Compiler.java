@@ -1,26 +1,21 @@
 package sh.sidd.asmi.compiler;
 
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.data.Expr;
-import sh.sidd.asmi.data.Expr.BinaryExpr;
-import sh.sidd.asmi.data.Expr.GroupingExpr;
-import sh.sidd.asmi.data.Expr.LiteralExpr;
-import sh.sidd.asmi.data.Expr.UnaryExpr;
-import sh.sidd.asmi.data.Expr.VariableExpr;
+import sh.sidd.asmi.data.Expr.*;
 import sh.sidd.asmi.data.Stmt;
-import sh.sidd.asmi.data.Stmt.AssertStmt;
-import sh.sidd.asmi.data.Stmt.AssignStmt;
-import sh.sidd.asmi.data.Stmt.BlockStmt;
-import sh.sidd.asmi.data.Stmt.DefStmt;
-import sh.sidd.asmi.data.Stmt.ExpressionStmt;
-import sh.sidd.asmi.data.Stmt.IfStmt;
-import sh.sidd.asmi.data.Stmt.PrintStmt;
-import sh.sidd.asmi.data.Stmt.VarStmt;
+import sh.sidd.asmi.data.Stmt.*;
 import sh.sidd.asmi.data.ValueType;
 import sh.sidd.asmi.scanner.SourceRetriever;
 
+import java.util.List;
+
+/**
+ * Compiles {@link Stmt} into java bytecode.
+ *
+ * See {@link sh.sidd.asmi.parser.Parser} on how {@link Stmt} are generated.
+ */
 @Slf4j
 public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
@@ -38,7 +33,11 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     this.ast = ast;
   }
 
-  /** Compiles the AST into a .class file. */
+  /**
+   * Compiles the AST into a .class file.
+   *
+   * Currently, all code is written into a single method.
+   */
   public void compile() {
     final var valueTypeVisitor = new ValueTypeVisitor(variableEnv, errorHandler);
     final var sourceLineVisitor = new SourceLineVisitor();
@@ -52,8 +51,8 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
       stmt.accept(sourceLineVisitor);
     }
 
-    writer.startClass();
-    writer.startMethod();
+    writer.startClass("sh/sidd/asmi/Compiled");
+    writer.startMethod("main");
 
     for(final var stmt : ast) {
       stmt.accept(this);
@@ -65,9 +64,16 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
   }
 
+  /**
+   * Runs the written source.
+   *
+   * Currently, all code is compiled to a single method.
+   *
+   * @throws Throwable For exceptions during execution.
+   */
   public void run() throws Throwable {
     if(!errorHandler.hasErrors()) {
-      writer.run();
+      writer.invokeMethod("sh.sidd.asmi.Compiled", "main");
     }
   }
 

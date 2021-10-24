@@ -1,15 +1,16 @@
 package sh.sidd.asmi;
 
+import lombok.extern.slf4j.Slf4j;
+import sh.sidd.asmi.compiler.Compiler;
+import sh.sidd.asmi.parser.Parser;
+import sh.sidd.asmi.scanner.Scanner;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
-import sh.sidd.asmi.compiler.Compiler;
-import sh.sidd.asmi.parser.Parser;
-import sh.sidd.asmi.scanner.Scanner;
 
 /** CLI for the Asmi tool. */
 @Slf4j
@@ -39,6 +40,9 @@ public class AsmiCli {
    * @param path The path to the file to run.
    */
   private void runFile(String path) {
+    System.out.println("Running ASMI source file " + path);
+    System.out.println();
+
     try {
       run(Files.readString(Paths.get(path)));
     } catch (IOException ex) {
@@ -49,6 +53,9 @@ public class AsmiCli {
 
   /** Runs an interactive Asmi REPL. */
   private void runPrompt() {
+    System.out.println("ASMI REPL");
+    System.out.println();
+
     try (var reader = new BufferedReader(new InputStreamReader(System.in))) {
 
       while (true) {

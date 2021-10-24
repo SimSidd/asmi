@@ -1,17 +1,14 @@
 package sh.sidd.asmi.compiler;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.reflect.MethodUtils;
+import org.objectweb.asm.*;
+import org.objectweb.asm.util.TraceClassVisitor;
+import sh.sidd.asmi.data.ValueType;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.reflect.MethodUtils;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.util.TraceClassVisitor;
-import sh.sidd.asmi.data.ValueType;
 
 /** Writer to write bytecode for a single .class file. */
 @Slf4j
@@ -39,11 +36,16 @@ public class ByteCodeWriter {
     methodVisitor = null;
   }
 
-  public void startClass() {
+  /**
+   * Writes the start of a new `class`.
+   *
+   * @param className Fully qualified name of the class. Should be written as "sh.sidd.asmi.ClassName".
+   */
+  public void startClass(String className) {
     classVisitor.visit(
         Opcodes.V16,
         Opcodes.ACC_PUBLIC,
-        "sh/sidd/asmi/Compiled",
+        className.replace(".", "/"),
         null,
         "java/lang/Object",
         new String[] {});
@@ -57,24 +59,38 @@ public class ByteCodeWriter {
     constructor.visitEnd();
   }
 
+  /**
+   * Ends the current `class`
+   */
   public void finishClass() {
     classVisitor.visitEnd();
   }
 
-  public void run() throws Throwable {
+  /**
+   * Runs the `execute` method. For testing purposes only.
+   *
+   * @param className Fully qualified name of the class. Should be written as "sh.sidd.asmi.ClassName".
+   * @throws Throwable For exceptions during execution.
+   */
+  public void invokeMethod(String className, String methodName) throws Throwable {
     final var compiledClass =
-        new AsmiClassLoader().defineClass("sh.sidd.asmi.Compiled", classWriter.toByteArray());
+        new AsmiClassLoader().defineClass(className, classWriter.toByteArray());
     final var instance = compiledClass.getDeclaredConstructor().newInstance();
 
     try {
-      MethodUtils.invokeMethod(instance, "execute");
+      MethodUtils.invokeMethod(instance, methodName);
     } catch (InvocationTargetException ex) {
       throw ex.getTargetException();
     }
   }
 
-  public void startMethod() {
-    methodVisitor = classVisitor.visitMethod(Opcodes.ACC_PUBLIC, "execute", "()V", null, null);
+  /**
+   * Writes the start of a new method.
+   *
+   * @param methodName The name of the method.
+   */
+  public void startMethod(String methodName) {
+    methodVisitor = classVisitor.visitMethod(Opcodes.ACC_PUBLIC, methodName, "()V", null, null);
     methodVisitor.visitCode();
 
     methodStart = new Label();

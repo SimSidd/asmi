@@ -1,27 +1,22 @@
 package sh.sidd.asmi.parser;
 
-import java.util.ArrayList;
-import java.util.List;
 import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.data.Expr;
-import sh.sidd.asmi.data.Expr.BinaryExpr;
-import sh.sidd.asmi.data.Expr.GroupingExpr;
-import sh.sidd.asmi.data.Expr.LiteralExpr;
-import sh.sidd.asmi.data.Expr.UnaryExpr;
-import sh.sidd.asmi.data.Expr.VariableExpr;
+import sh.sidd.asmi.data.Expr.*;
 import sh.sidd.asmi.data.Stmt;
-import sh.sidd.asmi.data.Stmt.AssertStmt;
-import sh.sidd.asmi.data.Stmt.AssignStmt;
-import sh.sidd.asmi.data.Stmt.BlockStmt;
-import sh.sidd.asmi.data.Stmt.DefStmt;
-import sh.sidd.asmi.data.Stmt.ExpressionStmt;
-import sh.sidd.asmi.data.Stmt.IfStmt;
-import sh.sidd.asmi.data.Stmt.PrintStmt;
-import sh.sidd.asmi.data.Stmt.VarStmt;
+import sh.sidd.asmi.data.Stmt.*;
 import sh.sidd.asmi.data.Token;
 import sh.sidd.asmi.data.TokenType;
 
-/** Parses a list of tokens into an abstract syntax tree. */
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Parses a list of {@link Token} into an abstract syntax tree, i.e a list of {@link Stmt}.
+ *
+ * See {@link sh.sidd.asmi.scanner.Scanner} on how {@link Token} are generated.
+ * See {@link sh.sidd.asmi.compiler.Compiler} on how {@link Stmt} are compiled.
+ */
 public class Parser {
 
   private final ErrorHandler errorHandler;
@@ -33,9 +28,9 @@ public class Parser {
   }
 
   /**
-   * Parses the given list of tokens into an expression.
+   * Parses the given list of tokens into statements.
    *
-   * @return The parsed expression.
+   * @return The parsed statements.
    */
   public List<Stmt> parse() {
     final var statements = new ArrayList<Stmt>();

@@ -1,9 +1,15 @@
 package sh.sidd.asmi.data;
 
-import java.util.List;
 import lombok.Getter;
 
-/** Base interface for all statements. */
+import java.util.List;
+
+/**
+ * Base interface for all statements.
+ *
+ * See {@link sh.sidd.asmi.parser.Parser} on how statements are generated.
+ * See {@link sh.sidd.asmi.compiler.Compiler} on how statements are compiled.
+ */
 public abstract class Stmt {
 
   /** Visitor pattern to visit each statement. */
