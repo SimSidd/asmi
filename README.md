@@ -52,3 +52,8 @@ else
   print "Something went wrong"
 end
 ```
+
+# References
+
+- https://asm.ow2.io/
+- http://craftinginterpreters.com/contents.html
