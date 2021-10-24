@@ -6,12 +6,12 @@ ASMI is a python-esque language which uses the JVM as runtime.
 
 # CLI
 ## REPL
-Without any arguments the CLI will start a REPL prompt.
+Without any arguments the CLI will start a REPL prompt. See also `Asmi` IntelliJ IDEA Run Configuration.
 
 Note that only single-line statements are currently supported.
 
 ## Compile and Run Source
-To compile and run a source file, pass the path as first argument to the CLI. See also `Asmi Source` Run Configuration.
+To compile and run a source file, pass the path as first argument to the CLI. See also `Asmi Source` IntelliJ IDEA Run Configuration.
 
 # Language Functionality
 ## Print
