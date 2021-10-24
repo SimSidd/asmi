@@ -2,7 +2,7 @@
 
 ASMI was created for learning purposes only and is not intended to be used!
 
-ASMI is a python-esque language which uses the JVM as runtime.
+ASMI is a python-esque language built on JVM.
 
 # CLI
 ## REPL
