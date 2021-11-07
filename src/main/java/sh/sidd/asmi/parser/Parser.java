@@ -68,6 +68,10 @@ public class Parser {
       return parseIfStatement();
     }
 
+    if (reader.advanceIfMatch(TokenType.WHILE)) {
+      return parseWhileStatement();
+    }
+
     return parseAssignmentOrExpressionStatement();
   }
 
@@ -131,6 +135,16 @@ public class Parser {
     }
 
     return new IfStmt(condition, thenBlock, elseBlock);
+  }
+
+  /** Parses a `while` statement. */
+  private WhileStmt parseWhileStatement() {
+    final var condition = parseExpression();
+    final var block = parseBlock(TokenType.END);
+
+    reader.consumeExpected(TokenType.END, "Expected 'end' after 'while' block.");
+
+    return new WhileStmt(condition, block);
   }
 
   /** Parses a statement which is either an assignment or an expression. */

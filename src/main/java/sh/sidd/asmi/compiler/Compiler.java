@@ -65,6 +65,13 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 
   /**
+   * Returns the String representation of the compiled bytecode.
+   */
+  public String getByteCode() {
+    return writer.getWrittenByteCode();
+  }
+
+  /**
    * Runs the written source.
    *
    * Currently, all code is compiled to a single method.
@@ -249,6 +256,15 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         () -> stmt.getCondition().accept(this),
         () -> stmt.getThenBlock().accept(this),
         elseRunnable);
+
+    return null;
+  }
+
+  @Override
+  public Void visitWhileStmt(WhileStmt stmt) {
+    writer.writeWhile(
+        () -> stmt.getCondition().accept(this),
+        () -> stmt.getBlock().accept(this));
 
     return null;
   }

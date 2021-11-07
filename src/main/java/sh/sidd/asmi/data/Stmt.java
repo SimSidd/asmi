@@ -29,6 +29,8 @@ public abstract class Stmt {
     R visitDefStmt(DefStmt stmt);
 
     R visitIfStmt(IfStmt stmt);
+
+    R visitWhileStmt(WhileStmt stmt);
   }
 
   /**
@@ -149,6 +151,21 @@ public abstract class Stmt {
     @Override
     public <R> R accept(Visitor<R> visitor) {
       return visitor.visitIfStmt(this);
+    }
+  }
+
+  public static class WhileStmt extends Stmt {
+    @Getter private final Expr condition;
+    @Getter private final Stmt block;
+
+    public WhileStmt(Expr condition, Stmt block) {
+      this.condition = condition;
+      this.block = block;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitWhileStmt(this);
     }
   }
 }

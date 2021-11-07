@@ -10,7 +10,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 
-/** Writer to write bytecode for a single .class file. */
+/** Writer to write bytecode for a single .class file and all supported statements. */
 @Slf4j
 public class ByteCodeWriter {
   private final ClassWriter classWriter;
@@ -64,6 +64,13 @@ public class ByteCodeWriter {
    */
   public void finishClass() {
     classVisitor.visitEnd();
+  }
+
+  /**
+   * Returns the String representation of the written bytecode.
+   */
+  public String getWrittenByteCode() {
+    return traceStringWriter.toString();
   }
 
   /**
@@ -396,5 +403,25 @@ public class ByteCodeWriter {
     }
 
     methodVisitor.visitLabel(continuationLabel);
+  }
+
+  /**
+   * Writes the bytecode for a while loop.
+   *
+   * @param condition A runnable which pushes 1 onto the stack if the loop condition is true.
+   * @param block A runnable which executes the loop block.
+   */
+  public void writeWhile(Runnable condition, Runnable block) {
+    final var loopConditionLabel = new Label();
+    final var loopExitLabel = new Label();
+
+    methodVisitor.visitLabel(loopConditionLabel);
+    condition.run();
+    methodVisitor.visitJumpInsn(Opcodes.IFNE, loopExitLabel);
+
+    block.run();
+    methodVisitor.visitJumpInsn(Opcodes.GOTO, loopConditionLabel);
+
+    methodVisitor.visitLabel(loopExitLabel);
   }
 }

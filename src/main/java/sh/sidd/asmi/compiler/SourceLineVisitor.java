@@ -2,20 +2,9 @@ package sh.sidd.asmi.compiler;
 
 import org.apache.commons.lang3.tuple.Pair;
 import sh.sidd.asmi.data.Expr;
-import sh.sidd.asmi.data.Expr.BinaryExpr;
-import sh.sidd.asmi.data.Expr.GroupingExpr;
-import sh.sidd.asmi.data.Expr.LiteralExpr;
-import sh.sidd.asmi.data.Expr.UnaryExpr;
-import sh.sidd.asmi.data.Expr.VariableExpr;
+import sh.sidd.asmi.data.Expr.*;
 import sh.sidd.asmi.data.Stmt;
-import sh.sidd.asmi.data.Stmt.AssertStmt;
-import sh.sidd.asmi.data.Stmt.AssignStmt;
-import sh.sidd.asmi.data.Stmt.BlockStmt;
-import sh.sidd.asmi.data.Stmt.DefStmt;
-import sh.sidd.asmi.data.Stmt.ExpressionStmt;
-import sh.sidd.asmi.data.Stmt.IfStmt;
-import sh.sidd.asmi.data.Stmt.PrintStmt;
-import sh.sidd.asmi.data.Stmt.VarStmt;
+import sh.sidd.asmi.data.Stmt.*;
 
 /** Visitor which determines the source lines for expressions. */
 public class SourceLineVisitor implements Expr.Visitor<Pair<Integer, Integer>>, Stmt.Visitor<Void> {
@@ -128,6 +117,14 @@ public class SourceLineVisitor implements Expr.Visitor<Pair<Integer, Integer>>, 
     if (stmt.getElseBlock() != null) {
       stmt.getElseBlock().accept(this);
     }
+
+    return null;
+  }
+
+  @Override
+  public Void visitWhileStmt(WhileStmt stmt) {
+    stmt.getCondition().accept(this);
+    stmt.getBlock().accept(this);
 
     return null;
   }

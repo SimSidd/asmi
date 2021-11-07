@@ -2,20 +2,9 @@ package sh.sidd.asmi.compiler;
 
 import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.data.Expr;
-import sh.sidd.asmi.data.Expr.BinaryExpr;
-import sh.sidd.asmi.data.Expr.GroupingExpr;
-import sh.sidd.asmi.data.Expr.LiteralExpr;
-import sh.sidd.asmi.data.Expr.UnaryExpr;
-import sh.sidd.asmi.data.Expr.VariableExpr;
+import sh.sidd.asmi.data.Expr.*;
 import sh.sidd.asmi.data.Stmt;
-import sh.sidd.asmi.data.Stmt.AssertStmt;
-import sh.sidd.asmi.data.Stmt.AssignStmt;
-import sh.sidd.asmi.data.Stmt.BlockStmt;
-import sh.sidd.asmi.data.Stmt.DefStmt;
-import sh.sidd.asmi.data.Stmt.ExpressionStmt;
-import sh.sidd.asmi.data.Stmt.IfStmt;
-import sh.sidd.asmi.data.Stmt.PrintStmt;
-import sh.sidd.asmi.data.Stmt.VarStmt;
+import sh.sidd.asmi.data.Stmt.*;
 import sh.sidd.asmi.data.ValueType;
 
 /** Visitor which determines the {@link ValueType} for expressions. */
@@ -133,6 +122,14 @@ public class ValueTypeVisitor implements Expr.Visitor<ValueType>, Stmt.Visitor<V
     if (stmt.getElseBlock() != null) {
       stmt.getElseBlock().accept(this);
     }
+
+    return ValueType.UNKNOWN;
+  }
+
+  @Override
+  public ValueType visitWhileStmt(WhileStmt stmt) {
+    stmt.getCondition().accept(this);
+    stmt.getBlock().accept(this);
 
     return ValueType.UNKNOWN;
   }

@@ -1,18 +1,19 @@
 package sh.sidd.asmi.e2e;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import org.assertj.core.api.Assertions;
 import sh.sidd.asmi.ErrorHandler;
 import sh.sidd.asmi.compiler.Compiler;
 import sh.sidd.asmi.parser.Parser;
 import sh.sidd.asmi.scanner.Scanner;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
+import static org.assertj.core.api.Assertions.*;
+
 public final class AsmiTestUtil {
+
+  private record SourceOutput(String output, String bytecode, ErrorHandler errorHandler) {}
 
   private AsmiTestUtil() {}
 
@@ -23,7 +24,7 @@ public final class AsmiTestUtil {
    * @param message The message to look for.
    */
   public static void assertCompileError(String source, String message) {
-    final var errorHandler = compileSource(source);
+    final var errorHandler = compileSource(source).errorHandler;
 
     Assertions.assertThat(errorHandler.hasErrors()).isTrue();
 
@@ -61,43 +62,26 @@ public final class AsmiTestUtil {
    * @param expectedOutput The expected output.
    */
   public static void assertOutput(String source, String expectedOutput) {
-    String output = "";
+    SourceOutput output = null;
 
     //noinspection CatchMayIgnoreException
     try {
-      output = runSourceWithOutput(source);
+      output = runSource(source);
     } catch (Throwable ex) { // NOPMD
       Assertions.fail("Failed to run program", ex);
     }
 
-    assertThat(output.replaceAll("\\r", "").strip())
-        .isEqualTo(expectedOutput.replaceAll("\\r", "").strip());
-  }
-
-  /**
-   * Compiles and runs the given source file content.
-   *
-   * <p>Assumes that the code does not have any parse or compile errors.
-   *
-   * @param source Source code to run.
-   */
-  private static ErrorHandler runSource(String source) throws Throwable {
-    final var errorHandler = new ErrorHandler();
-    final var scanner = new Scanner(source, errorHandler);
-    final var tokens = scanner.scanTokens();
-    final var parser = new Parser(errorHandler, tokens);
-    final var ast = parser.parse();
-    final var compiler = new Compiler(errorHandler, ast, scanner);
-
-    assertThat(errorHandler.hasErrors()).as("Should not have parse errors.").isFalse();
-
-    compiler.compile();
-
-    assertThat(errorHandler.hasErrors()).as("Should not have compile errors.").isFalse();
-
-    compiler.run();
-
-    return errorHandler;
+    if (output == null) {
+      Assertions.fail("No output");
+    } else {
+      try {
+      assertThat(output.output.replaceAll("\\r", "").strip())
+          .isEqualTo(expectedOutput.replaceAll("\\r", "").strip());
+      } catch (AssertionError ex) {
+        System.out.println(output.bytecode);
+        throw ex;
+      }
+    }
   }
 
   /**
@@ -106,7 +90,7 @@ public final class AsmiTestUtil {
    * @param source Source code to run.
    * @return The output of the program.
    */
-  private static String runSourceWithOutput(String source) throws Throwable {
+  private static SourceOutput runSource(String source) throws Throwable {
     final var errorHandler = new ErrorHandler();
     final var scanner = new Scanner(source, errorHandler);
     final var tokens = scanner.scanTokens();
@@ -122,12 +106,12 @@ public final class AsmiTestUtil {
 
     final var originalOut = System.out;
     final var outBaos = new ByteArrayOutputStream();
+
     System.setOut(new PrintStream(outBaos));
-
     compiler.run();
-
     System.setOut(originalOut);
-    return outBaos.toString();
+
+    return new SourceOutput(outBaos.toString(), compiler.getByteCode(), errorHandler);
   }
 
   /**
@@ -136,7 +120,7 @@ public final class AsmiTestUtil {
    * @param source The source to compile.
    * @return The error handler used during parsing and compilation.
    */
-  private static ErrorHandler compileSource(String source) {
+  private static SourceOutput compileSource(String source) {
     final var errorHandler = new ErrorHandler();
     final var scanner = new Scanner(source, errorHandler);
     final var tokens = scanner.scanTokens();
@@ -146,6 +130,6 @@ public final class AsmiTestUtil {
 
     compiler.compile();
 
-    return errorHandler;
+    return new SourceOutput(null, null, errorHandler);
   }
 }
