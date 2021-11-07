@@ -67,3 +67,4 @@ end
 
 - https://asm.ow2.io/
 - http://craftinginterpreters.com/contents.html
+- https://en.wikipedia.org/wiki/List_of_Java_bytecode_instructions
