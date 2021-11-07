@@ -53,7 +53,7 @@ else
 end
 ```
 
-## While loops
+## While Loops
 ```
 var i = 0
             
