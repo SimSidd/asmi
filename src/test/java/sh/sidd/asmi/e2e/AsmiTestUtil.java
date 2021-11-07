@@ -56,6 +56,16 @@ public final class AsmiTestUtil {
   }
 
   /**
+   * Asserts that given source code produces a runtime error.
+   *
+   * @param source The source to run.
+   */
+  public static void assertRuntimeError(String source) {
+    assertThatThrownBy(() -> runSource(source))
+        .isInstanceOf(Throwable.class);
+  }
+
+  /**
    * Asserts that the given code produces the expected output.
    *
    * @param source The source to run.

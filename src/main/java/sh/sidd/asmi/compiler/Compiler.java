@@ -116,6 +116,10 @@ public class Compiler implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
           writer.writeCmp(resultType);
           writer.writeNeg(resultType);
         }
+        case LESS -> writer.writeLt(resultType);
+        case LESS_EQUAL -> writer.writeLe(resultType);
+        case GREATER -> writer.writeGt(resultType);
+        case GREATER_EQUAL -> writer.writeGe(resultType);
         default -> errorHandler.report(expr.getOperator(), "Expected binary operator.");
       }
     } catch (ByteCodeException ex) {

@@ -292,6 +292,63 @@ public class ByteCodeWriter {
    * @param valueType The type of the current values.
    */
   public void writeCmp(ValueType valueType) throws ByteCodeException {
+    writeCmp(valueType, Opcodes.IFEQ, Opcodes.IF_ICMPEQ);
+  }
+
+  /**
+   * Writes *CMPLT for the given types.
+   *
+   * Pushes `1` onto the stack if the first value is less than the second, otherwise '0'.
+   *
+   * @param valueType The type of the current values.
+   */
+  public void writeLt(ValueType valueType) throws ByteCodeException {
+    writeCmp(valueType, Opcodes.IFLT, Opcodes.IF_ICMPLT);
+  }
+
+  /**
+   * Writes *CMPLE for the given types.
+   *
+   * Pushes `1` onto the stack if the first value is less-or-equal than the second, otherwise '0'.
+   *
+   * @param valueType The type of the current values.
+   */
+  public void writeLe(ValueType valueType) throws ByteCodeException {
+    writeCmp(valueType, Opcodes.IFLE, Opcodes.IF_ICMPLE);
+  }
+
+  /**
+   * Writes *CMPGT for the given types.
+   *
+   * Pushes `1` onto the stack if the first value is greater than the second, otherwise '0'.
+   *
+   * @param valueType The type of the current values.
+   */
+  public void writeGt(ValueType valueType) throws ByteCodeException {
+    writeCmp(valueType, Opcodes.IFGT, Opcodes.IF_ICMPGT);
+  }
+
+  /**
+   * Writes *CMPGE for the given types.
+   *
+   * Pushes `1` onto the stack if the first value is greater-or-equal than the second, otherwise '0'.
+   *
+   * @param valueType The type of the current values.
+   */
+  public void writeGe(ValueType valueType) throws ByteCodeException {
+    writeCmp(valueType, Opcodes.IFGE, Opcodes.IF_ICMPGE);
+  }
+
+  /**
+   * Writes a generic *CMP for the given types.
+   *
+   * Pushes `1` onto the stack if the check is successful, otherwise '0'.
+   *
+   * @param valueType The type of the current values.
+   * @param jumpCheck The Opcode for checking the values, e.g. {@link Opcodes#IFEQ}
+   * @param icmpCheck The Opcode for checking the values as integers, e.g. {@link Opcodes#IF_ICMPEQ}
+   */
+  public void writeCmp(ValueType valueType, int jumpCheck, int icmpCheck) throws ByteCodeException {
     if(!valueType.isNumeric()) {
       throw new ByteCodeException("Cannot compare non-numeric types.");
     }
@@ -301,15 +358,15 @@ public class ByteCodeWriter {
 
     if(valueType == ValueType.FLOAT) {
       methodVisitor.visitInsn(Opcodes.FCMPG);
-      methodVisitor.visitJumpInsn(Opcodes.IFEQ, equalLabel);
+      methodVisitor.visitJumpInsn(jumpCheck, equalLabel);
     } else if(valueType == ValueType.DOUBLE) {
       methodVisitor.visitInsn(Opcodes.DCMPG);
-      methodVisitor.visitJumpInsn(Opcodes.IFEQ, equalLabel);
+      methodVisitor.visitJumpInsn(jumpCheck, equalLabel);
     } else if(valueType == ValueType.LONG) {
       methodVisitor.visitInsn(Opcodes.LCMP);
-      methodVisitor.visitJumpInsn(Opcodes.IFEQ, equalLabel);
+      methodVisitor.visitJumpInsn(jumpCheck, equalLabel);
     } else {
-      methodVisitor.visitJumpInsn(Opcodes.IF_ICMPEQ, equalLabel);
+      methodVisitor.visitJumpInsn(icmpCheck, equalLabel);
     }
 
     methodVisitor.visitInsn(Opcodes.ICONST_0);
@@ -417,7 +474,7 @@ public class ByteCodeWriter {
 
     methodVisitor.visitLabel(loopConditionLabel);
     condition.run();
-    methodVisitor.visitJumpInsn(Opcodes.IFNE, loopExitLabel);
+    methodVisitor.visitJumpInsn(Opcodes.IFEQ, loopExitLabel);
 
     block.run();
     methodVisitor.visitJumpInsn(Opcodes.GOTO, loopConditionLabel);
