@@ -2,6 +2,7 @@ package sh.sidd.asmi.scanner;
 
 import lombok.Getter;
 
+/** Helper to simplify reading parts of a source. */
 public class SourceReader {
   private final String source;
   @Getter private int currentPos;

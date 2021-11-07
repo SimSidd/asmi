@@ -10,7 +10,7 @@ public abstract class Expr {
   @Getter @Setter private int lineStart;
   @Getter @Setter private int lineEnd;
 
-  /** Visitor pattern to visit each expression. */
+  /** Visitor pattern to visit each type of expression. */
   public interface Visitor<R> {
     R visitBinaryExpr(BinaryExpr expr);
 
